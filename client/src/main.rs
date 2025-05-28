@@ -1,7 +1,10 @@
 use std::env;
 use std::net::TcpStream;
-use std::io::{self, Write, Read};
+use std::io::{Write, Read};
 use dotenv::dotenv;
+
+mod init;
+use init::init_game::initialize_game;
 
 fn main() {
     // Load environment variables from .env file
@@ -17,9 +20,7 @@ fn main() {
         Ok(mut stream) => {
             println!("Successfully connected to server at {}", address);
 
-            let mut input = String::new();
-            println!("Enter a message to send:");
-            io::stdin().read_line(&mut input).unwrap();
+            let input = initialize_game();
 
             // Send message to server
             if let Err(e) = stream.write_all(input.as_bytes()) {
@@ -27,7 +28,7 @@ fn main() {
                 return;
             }
 
-            let mut buffer = [0; 512];
+            let mut buffer = [0; 2048];
             // Read response from server
             match stream.read(&mut buffer) {
                 Ok(bytes_read) => {

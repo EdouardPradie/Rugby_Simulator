@@ -15,13 +15,14 @@ pub struct Display {
     height: usize,
     size: usize,
     try_size: usize,
+    is_initialized: bool,
 }
 
 impl Display {
     pub fn new(width: usize, height: usize, try_size: usize) -> Self {
         let size: usize = width + 2 * try_size;
         let window = Window::new(
-            "Rugby Simulator",
+            "starting...",
             size,
             height,
             WindowOptions::default(),
@@ -29,17 +30,60 @@ impl Display {
             panic!("Unable to open window: {}", e);
         });
         let buffer: Vec<u32> = vec![GROUND_COLOR; size * height];
+        let is_initialized = false;
 
-        Self { window, buffer, width, height, size, try_size}
+        Self { window, buffer, width, height, size, try_size, is_initialized }
+    }
+
+    pub fn initialize(&mut self, field: String, pixel_per_cell: usize) {
+        // Parse the field dimensions from the field string
+        let field_parts: Vec<&str> = field.split('_').collect();
+        self.width = field_parts.get(0)
+            .and_then(|s| s.split('=').nth(1))
+            .and_then(|v| v.parse().ok())
+            .unwrap_or(100) * pixel_per_cell;
+        self.height = field_parts.get(1)
+        .and_then(|s| s.split('=').nth(1))
+        .and_then(|v| v.parse().ok())
+        .unwrap_or(70) * pixel_per_cell;
+        self.try_size = field_parts.get(2)
+            .and_then(|s| s.split('=').nth(1))
+            .and_then(|v| v.parse().ok())
+            .unwrap_or(10) * pixel_per_cell;
+
+        self.size = self.width + 2 * self.try_size;
+        self.window = Window::new(
+            "Rugby Simulator",
+            self.size,
+            self.height,
+            WindowOptions::default(),
+        ).unwrap_or_else(|e| {
+            panic!("Unable to open window: {}", e);
+        });
+        self.is_initialized = true;
+        self.buffer = vec![GROUND_COLOR; self.size * self.height];
     }
 
     pub fn render(&mut self, state: &GameState, pixel_per_cell: usize) {
+        // Check if the display is initialized
+        if !self.is_initialized {
+            return;
+        }
+
         // Clear field
-        // self.draw_field2(pixel_per_cell); for a funny display like a blackberry
         self.draw_field(pixel_per_cell);
 
         // Draw players
-        for player in &state.players {
+        for player in &state.home_players {
+            self.draw_square(
+                player.x * pixel_per_cell,
+                player.y * pixel_per_cell,
+                pixel_per_cell - 2,
+                if player.team == 1 { TEAM1 } else { TEAM2 }
+            );
+        }
+
+        for player in &state.away_players {
             self.draw_square(
                 player.x * pixel_per_cell,
                 player.y * pixel_per_cell,
@@ -79,6 +123,17 @@ impl Display {
         self.buffer.fill(GROUND_COLOR);
         // Draw the field lines
         // Top & Bottom row
+        if  self.width < 94 * pixel_per_cell ||
+            self.width > 100 * pixel_per_cell ||
+            self.height < 68 * pixel_per_cell ||
+            self.height > 70 * pixel_per_cell ||
+            self.try_size < 10 * pixel_per_cell ||
+            self.try_size > 22 * pixel_per_cell ||
+            pixel_per_cell < 1 {
+            println!("Invalid field dimensions or pixel_per_cell. Please check your configuration.");
+            println!("Width: {}, Height: {}, Try Size: {}, Pixel per Cell: {}", self.width, self.height, self.try_size, pixel_per_cell);
+            return;
+        }
         for j in 0..self.size {
             // Draw out lines
             for i in 0..pixel_per_cell {

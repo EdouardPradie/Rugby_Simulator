@@ -14,6 +14,8 @@ use game::game_state::GameState;
 
 mod network;
 use network::handler::handle_client;
+use network::event::ClientEvent;
+
 fn main() {
     // Load environment variables from .env file
     dotenv().ok();
@@ -24,7 +26,7 @@ fn main() {
     let address = format!("{}:{}", ip, port);
 
     // Communication with the handler
-    let (tx, rx): (Sender<SocketAddr>, Receiver<SocketAddr>) = channel();
+    let (tx, rx): (Sender<ClientEvent>, Receiver<ClientEvent>) = channel();
 
     // Initialize graphics settings
     let graphics_enabled: bool = env::var("GRAPHICS").unwrap_or("false".to_string()).to_lowercase() == "true";
@@ -39,12 +41,12 @@ fn main() {
     listener.set_nonblocking(true).expect("Cannot set non-blocking");
 
     if graphics_enabled {
-        println!("Graphics mode enabled.");
+        println!("\nGraphics mode enabled.");
     } else {
-        println!("Graphics mode disabled.");
+        println!("\nGraphics mode disabled.");
     }
 
-    println!("Server listening on {}", address);
+    println!("Server listening on {}\n", address);
 
     // Accept incoming connections
     loop {
@@ -59,9 +61,7 @@ fn main() {
                     let field_width: usize = env::var("FIELD_MAX_WIDTH").unwrap_or("100".to_string()).parse().unwrap();
                     let field_height: usize = env::var("FIELD_MAX_HEIGHT").unwrap_or("70".to_string()).parse().unwrap();
                     let try_size: usize = env::var("TRY_MIN_SIZE").unwrap_or("10".to_string()).parse().unwrap();
-                    let window_width: usize = field_width * pixel_per_cell;
-                    let window_height: usize = field_height * pixel_per_cell;
-                    let display = Display::new(window_width, window_height, try_size * pixel_per_cell);
+                    let display = Display::new(field_width * pixel_per_cell, field_height * pixel_per_cell, try_size * pixel_per_cell);
 
                     displays.insert(client_id, display);
                 }
@@ -78,11 +78,25 @@ fn main() {
             }
         }
         // Handle disconnected clients (from handle_client via tx)
-        while let Ok(disconnected_id) = rx.try_recv() {
-            clients.remove(&disconnected_id);
-            if let Some(mut display) = displays.remove(&disconnected_id) {
-                display.close();
-                println!("Cleaning up {} client.", disconnected_id);
+        while let Ok(event) = rx.try_recv() {
+            match event {
+                ClientEvent::Disconnected(addr) => {
+                    clients.remove(&addr);
+                    if let Some(mut display) = displays.remove(&addr) {
+                        display.close();
+                        println!("Cleaned up {} client.", addr);
+                    }
+                }
+                ClientEvent::Initialized { addr, field, home_players, away_players } => {
+                    if let Some(client) = clients.get_mut(&addr) {
+                        client.initialize(home_players, away_players);
+                    }
+                    if graphics_enabled {
+                        if let Some(display) = displays.get_mut(&addr) {
+                            display.initialize(field, pixel_per_cell);
+                        }
+                    }
+                }
             }
         }
         // Game logic
