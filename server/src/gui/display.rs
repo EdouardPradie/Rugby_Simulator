@@ -4,9 +4,23 @@ use crate::game::game_state::GameState;
 const GROUND_COLOR: u32 = 0xFF66D575;
 const GROUND_LINE_COLOR: u32 = 0xFFCDF4D3;
 const GROUND_OUT_COLOR: u32 = 0xFFD9D9D9;
-const TEAM1: u32 = 0xFFFF0000;
-const TEAM2: u32 = 0xFF0000FF;
+const TEAM1: u32 = 0xFFA12222;
+const TEAM2: u32 = 0xFF000000;
 const WHITE: u32 = 0xFFFFFFFF;
+const RED: u32 = 0xFFFF0000;
+
+const FONT_3X5: [[&str; 5]; 10] = [
+    [ "111", "101", "101", "101", "111" ], // 0
+    [ "010", "110", "010", "010", "111" ], // 1
+    [ "111", "001", "111", "100", "111" ], // 2
+    [ "111", "001", "111", "001", "111" ], // 3
+    [ "101", "101", "111", "001", "001" ], // 4
+    [ "111", "100", "111", "001", "111" ], // 5
+    [ "111", "100", "111", "101", "111" ], // 6
+    [ "111", "001", "001", "001", "001" ], // 7
+    [ "111", "101", "111", "101", "111" ], // 8
+    [ "111", "101", "111", "001", "111" ], // 9
+];
 
 pub struct Display {
     window: Window,
@@ -73,7 +87,7 @@ impl Display {
         // Clear field
         self.draw_field(pixel_per_cell);
 
-        // Draw players
+        // Draw home players
         for player in &state.home_players {
             self.draw_square(
                 player.x * pixel_per_cell,
@@ -81,8 +95,33 @@ impl Display {
                 pixel_per_cell - 2,
                 if player.team == 1 { TEAM1 } else { TEAM2 }
             );
+            if player.number > 9 {
+                self.draw_digit(
+                    player.x * pixel_per_cell - (pixel_per_cell - 2) / 2 + 1,
+                    player.y * pixel_per_cell - (pixel_per_cell - 2) / 3,
+                    (pixel_per_cell - 2) / 5,
+                    (player.number / 10) as u8,
+                    WHITE
+                );
+                self.draw_digit(
+                    player.x * pixel_per_cell + 1,
+                    player.y * pixel_per_cell - (pixel_per_cell - 2) / 3,
+                    (pixel_per_cell - 2) / 5,
+                    (player.number % 10) as u8,
+                    WHITE
+                );
+            } else {
+                self.draw_digit(
+                    player.x * pixel_per_cell - (pixel_per_cell - 2) / 5,
+                    player.y * pixel_per_cell - (pixel_per_cell - 2) / 3,
+                    (pixel_per_cell - 2) / 5,
+                    player.number as u8,
+                    WHITE
+                );
+            }
         }
 
+        // Draw away players
         for player in &state.away_players {
             self.draw_square(
                 player.x * pixel_per_cell,
@@ -90,6 +129,30 @@ impl Display {
                 pixel_per_cell - 2,
                 if player.team == 1 { TEAM1 } else { TEAM2 }
             );
+            if player.number > 9 {
+                self.draw_digit(
+                    player.x * pixel_per_cell - (pixel_per_cell - 2) / 2 + 1,
+                    player.y * pixel_per_cell - (pixel_per_cell - 2) / 3,
+                    (pixel_per_cell - 2) / 5,
+                    (player.number / 10) as u8,
+                    WHITE
+                );
+                self.draw_digit(
+                    player.x * pixel_per_cell + 1,
+                    player.y * pixel_per_cell - (pixel_per_cell - 2) / 3,
+                    (pixel_per_cell - 2) / 5,
+                    (player.number % 10) as u8,
+                    WHITE
+                );
+            } else {
+                self.draw_digit(
+                    player.x * pixel_per_cell - (pixel_per_cell - 2) / 5,
+                    player.y * pixel_per_cell - (pixel_per_cell - 2) / 3,
+                    (pixel_per_cell - 2) / 5,
+                    player.number as u8,
+                    WHITE
+                );
+            }
         }
 
         // Draw ball
@@ -99,6 +162,12 @@ impl Display {
             pixel_per_cell / 2,
             WHITE
         );
+        // Draw ball line
+        self.draw_line(
+            state.ball.x * pixel_per_cell,
+            RED
+        );
+
 
         // Update the window
         self.window
@@ -109,10 +178,47 @@ impl Display {
     fn draw_square(&mut self, x: usize, y: usize, size: usize, color: u32) {
         for dy in 0..size {
             for dx in 0..size {
-                let px: usize = x + dx;
-                let py = y + dy;
+                let px: usize = x + dx - (size / 2);
+                let py = y + dy - (size / 2);
                 if px < self.size && py < self.height {
                     self.buffer[py * self.size + px] = color;
+                }
+            }
+        }
+    }
+
+    fn draw_line(&mut self, x: usize, color: u32) {
+        for i in 0..self.height {
+            self.buffer[i * self.size + x] = color;
+        }
+    }
+
+    fn draw_digit(
+        &mut self,
+        x: usize,
+        y: usize,
+        size: usize,
+        digit: u8,
+        color: u32
+    ) {
+        if digit > 9 { return; }
+
+        let pattern = &FONT_3X5[digit as usize];
+
+        for (row_idx, row) in pattern.iter().enumerate() {
+            for (col_idx, c) in row.chars().enumerate() {
+                if c == '1' {
+                    // Scale the pixel block
+                    for dy in 0..size {
+                        for dx in 0..size {
+                            let px = x + col_idx * size + dx;
+                            let py = y + row_idx * size + dy;
+
+                            if px < self.size && py * self.size + px < self.size * self.height {
+                                self.buffer[py * self.size + px] = color;
+                            }
+                        }
+                    }
                 }
             }
         }

@@ -89,7 +89,7 @@ fn main() {
                 }
                 ClientEvent::Initialized { addr, field, home_players, away_players } => {
                     if let Some(client) = clients.get_mut(&addr) {
-                        client.initialize(home_players, away_players);
+                        client.initialize(field.clone(), home_players, away_players);
                     }
                     if graphics_enabled {
                         if let Some(display) = displays.get_mut(&addr) {
@@ -101,7 +101,7 @@ fn main() {
         }
         // Game logic
         for (client_id, state) in &mut clients {
-            state.update();
+            // state.test();
             if graphics_enabled && displays.iter().any(|(id, _)| *id == *client_id) {
                 if let Some(display) = displays.iter_mut().find(|(id, _)| **id == *client_id) {
                     if display.1.is_open() {
