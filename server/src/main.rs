@@ -8,9 +8,9 @@ use std::time::Duration;
 
 mod gui;
 use gui::display::Display;
+use gui::drawable::Drawable;
 
 mod game;
-use game::game_state::GameState;
 
 mod network;
 use network::handler::handle_client;
@@ -28,19 +28,17 @@ fn main() {
     // Communication with the handler
     let (tx, rx): (Sender<ClientEvent>, Receiver<ClientEvent>) = channel();
 
-    // Initialize graphics settings
-    let graphics_enabled: bool = env::var("GRAPHICS").unwrap_or("false".to_string()).to_lowercase() == "true";
-    let pixel_per_cell: usize = env::var("PIXEL_SIZE").unwrap_or("10".to_string()).parse().unwrap();
+    // Initialize display availability
+    let display_enable: bool = env::var("DISPLAY").unwrap_or("false".to_string()).to_lowercase() == "true";
+    let pixel_per_cell: usize = env::var("PIXEL_SIZE").unwrap_or("0".to_string()).parse().unwrap();
     let mut displays: HashMap<SocketAddr, Display> = HashMap::new();
-
-    // Initialize a list of clients
-    let mut clients: HashMap<SocketAddr, GameState> = HashMap::new();
+    let mut drawables: HashMap<SocketAddr, Drawable> = HashMap::new();
 
     // Start TCP listener
     let listener = TcpListener::bind(&address).expect("Failed to bind server address");
     listener.set_nonblocking(true).expect("Cannot set non-blocking");
 
-    if graphics_enabled {
+    if display_enable {
         println!("\nGraphics mode enabled.");
     } else {
         println!("\nGraphics mode disabled.");
@@ -53,11 +51,10 @@ fn main() {
         match listener.accept() {
             Ok((stream, _addr)) => {
                 println!("New client connected {}.", stream.peer_addr().unwrap());
-                // Define the status if we are in graphics mode or not
+                // Initialize a new client state
                 let client_id = stream.peer_addr().unwrap();
 
-                clients.insert(client_id, GameState::new());
-                if graphics_enabled {
+                if display_enable {
                     let field_width: usize = env::var("FIELD_MAX_WIDTH").unwrap_or("100".to_string()).parse().unwrap();
                     let field_height: usize = env::var("FIELD_MAX_HEIGHT").unwrap_or("70".to_string()).parse().unwrap();
                     let try_size: usize = env::var("TRY_MIN_SIZE").unwrap_or("10".to_string()).parse().unwrap();
@@ -66,8 +63,9 @@ fn main() {
                     displays.insert(client_id, display);
                 }
                 let tx_clone = tx.clone();
-                thread::spawn(|| {
-                    handle_client(stream, tx_clone);
+                let display_enable_clone = display_enable.clone();
+                thread::spawn(move || {
+                    handle_client(stream, display_enable_clone, tx_clone);
                 });
             }
             Err(ref e) if e.kind() == std::io::ErrorKind::WouldBlock => {
@@ -77,35 +75,37 @@ fn main() {
                 println!("Connection failed: {}", e);
             }
         }
-        // Handle disconnected clients (from handle_client via tx)
+        // Catch clients event (from handle_client via tx)
         while let Ok(event) = rx.try_recv() {
             match event {
                 ClientEvent::Disconnected(addr) => {
-                    clients.remove(&addr);
                     if let Some(mut display) = displays.remove(&addr) {
                         display.close();
-                        println!("Cleaned up {} client.", addr);
+                        println!("Cleaned up {} window.", addr);
                     }
                 }
-                ClientEvent::Initialized { addr, field, home_players, away_players } => {
-                    if let Some(client) = clients.get_mut(&addr) {
-                        client.initialize(field.clone(), home_players, away_players);
-                    }
-                    if graphics_enabled {
+                ClientEvent::Initialized { addr, field, drawable} => {
+                    if display_enable {
                         if let Some(display) = displays.get_mut(&addr) {
                             display.initialize(field, pixel_per_cell);
+                            drawables.insert(addr, drawable);
                         }
+                    }
+                }
+                ClientEvent::DisplayUpdate { addr, drawable } => {
+                    if display_enable {
+                        drawables.insert(addr, drawable);
                     }
                 }
             }
         }
         // Game logic
-        for (client_id, state) in &mut clients {
+        for (client_id, drawable) in &mut drawables {
             // state.test();
-            if graphics_enabled && displays.iter().any(|(id, _)| *id == *client_id) {
+            if display_enable && displays.iter().any(|(id, _)| *id == *client_id) {
                 if let Some(display) = displays.iter_mut().find(|(id, _)| **id == *client_id) {
                     if display.1.is_open() {
-                        display.1.render(state, pixel_per_cell);
+                        display.1.render(drawable, pixel_per_cell);
                         thread::sleep(Duration::from_millis(1000 / 30)); // 30 FPS
                     }
                 }

@@ -1,31 +1,38 @@
 use std::io::{Read, Write};
+use std::sync::mpsc::Sender;
 use std::net::TcpStream;
 use std::io::ErrorKind;
-use std::sync::mpsc::Sender;
 
+use crate::game::game_state::GameState;
 use crate::network::event::ClientEvent;
 
 /// Handles communication with a single client.
-pub fn handle_client(mut stream: TcpStream, tx: Sender<ClientEvent>) {
+pub fn handle_client(mut stream: TcpStream, display_enable: bool, tx: Sender<ClientEvent>) {
     let mut buffer = [0; 2048];
+    let mut state= 0;
     let addr = stream.peer_addr().unwrap();
+    // Initialize the client environment
+    let mut client = GameState::new();
 
     loop {
         match stream.read(&mut buffer) {
             Ok(0) => {
                 println!("Client {} disconnected.", addr);
-                let _ = tx.send(ClientEvent::Disconnected(addr));
+                if display_enable {
+                    let _ = tx.send(ClientEvent::Disconnected(addr));
+                }
                 break;
             }
             Ok(n) => {
                 // Check if the received data is an "init" message
-                if buffer.starts_with(b"init") {
+                if buffer.starts_with(b"init") && state == 0 {
                     println!("Initialization message received from {}", addr);
 
                     let tmp  = buffer.split(|&byte| byte == b'\n');
                     let mut field: String = String::new();
                     let mut home_players: Vec<String> = Vec::new();
                     let mut away_players: Vec<String> = Vec::new();
+
                     for (index, part) in tmp.enumerate() {
                         if index == 0 {
                             // Skip the first part which is "init"
@@ -42,17 +49,23 @@ pub fn handle_client(mut stream: TcpStream, tx: Sender<ClientEvent>) {
                         }
                     }
 
-                    println!("Field: {}", field);
-                    println!("Home Players: {}", home_players.len());
-                    println!("Away Players: {}", away_players.len());
+                    client.initialize(field.clone(), home_players, away_players);
+                    if display_enable {
+                        let _ = tx.send(ClientEvent::Initialized {
+                            addr,
+                            field,
+                            drawable: client.get_drawable(),
+                        });
+                    }
 
-                    let _ = tx.send(ClientEvent::Initialized {
-                        addr,
-                        field,
-                        home_players,
-                        away_players,
-                    });
-                    continue; // don't respond
+                    state = 1; // Change state to indicate initialization is done
+                    let mut response = String::from("start\n");
+                    response.push_str(client.positions().as_str());
+                    // if let Err(e) = stream.write_all(response.as_bytes()) {
+                    //     println!("Failed to send player positions: {}", e);
+                    //     break;
+                    // }
+                    continue;
                 }
 
                 // Echo back the received data

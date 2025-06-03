@@ -1,5 +1,5 @@
 use minifb::{Window, WindowOptions};
-use crate::game::game_state::GameState;
+use crate::gui::drawable::Drawable;
 
 const GROUND_COLOR: u32 = 0xFF66D575;
 const GROUND_LINE_COLOR: u32 = 0xFFCDF4D3;
@@ -78,7 +78,7 @@ impl Display {
         self.buffer = vec![GROUND_COLOR; self.size * self.height];
     }
 
-    pub fn render(&mut self, state: &GameState, pixel_per_cell: usize) {
+    pub fn render(&mut self, drawable: &Drawable, pixel_per_cell: usize) {
         // Check if the display is initialized
         if !self.is_initialized {
             return;
@@ -88,32 +88,32 @@ impl Display {
         self.draw_field(pixel_per_cell);
 
         // Draw home players
-        for player in &state.home_players {
+        for player in &drawable.home_players {
             self.draw_square(
-                player.x * pixel_per_cell,
-                player.y * pixel_per_cell,
+                player.pos.x * pixel_per_cell,
+                player.pos.y * pixel_per_cell,
                 pixel_per_cell - 2,
-                if player.team == 1 { TEAM1 } else { TEAM2 }
+                TEAM1
             );
             if player.number > 9 {
                 self.draw_digit(
-                    player.x * pixel_per_cell - (pixel_per_cell - 2) / 2 + 1,
-                    player.y * pixel_per_cell - (pixel_per_cell - 2) / 3,
+                    player.pos.x * pixel_per_cell - (pixel_per_cell - 2) / 2 + 1,
+                    player.pos.y * pixel_per_cell - (pixel_per_cell - 2) / 3,
                     (pixel_per_cell - 2) / 5,
                     (player.number / 10) as u8,
                     WHITE
                 );
                 self.draw_digit(
-                    player.x * pixel_per_cell + 1,
-                    player.y * pixel_per_cell - (pixel_per_cell - 2) / 3,
+                    player.pos.x * pixel_per_cell + 1,
+                    player.pos.y * pixel_per_cell - (pixel_per_cell - 2) / 3,
                     (pixel_per_cell - 2) / 5,
                     (player.number % 10) as u8,
                     WHITE
                 );
             } else {
                 self.draw_digit(
-                    player.x * pixel_per_cell - (pixel_per_cell - 2) / 5,
-                    player.y * pixel_per_cell - (pixel_per_cell - 2) / 3,
+                    player.pos.x * pixel_per_cell - (pixel_per_cell - 2) / 5,
+                    player.pos.y * pixel_per_cell - (pixel_per_cell - 2) / 3,
                     (pixel_per_cell - 2) / 5,
                     player.number as u8,
                     WHITE
@@ -122,32 +122,32 @@ impl Display {
         }
 
         // Draw away players
-        for player in &state.away_players {
+        for player in &drawable.away_players {
             self.draw_square(
-                player.x * pixel_per_cell,
-                player.y * pixel_per_cell,
+                player.pos.x * pixel_per_cell,
+                player.pos.y * pixel_per_cell,
                 pixel_per_cell - 2,
-                if player.team == 1 { TEAM1 } else { TEAM2 }
+                TEAM2
             );
             if player.number > 9 {
                 self.draw_digit(
-                    player.x * pixel_per_cell - (pixel_per_cell - 2) / 2 + 1,
-                    player.y * pixel_per_cell - (pixel_per_cell - 2) / 3,
+                    player.pos.x * pixel_per_cell - (pixel_per_cell - 2) / 2 + 1,
+                    player.pos.y * pixel_per_cell - (pixel_per_cell - 2) / 3,
                     (pixel_per_cell - 2) / 5,
                     (player.number / 10) as u8,
                     WHITE
                 );
                 self.draw_digit(
-                    player.x * pixel_per_cell + 1,
-                    player.y * pixel_per_cell - (pixel_per_cell - 2) / 3,
+                    player.pos.x * pixel_per_cell + 1,
+                    player.pos.y * pixel_per_cell - (pixel_per_cell - 2) / 3,
                     (pixel_per_cell - 2) / 5,
                     (player.number % 10) as u8,
                     WHITE
                 );
             } else {
                 self.draw_digit(
-                    player.x * pixel_per_cell - (pixel_per_cell - 2) / 5,
-                    player.y * pixel_per_cell - (pixel_per_cell - 2) / 3,
+                    player.pos.x * pixel_per_cell - (pixel_per_cell - 2) / 5,
+                    player.pos.y * pixel_per_cell - (pixel_per_cell - 2) / 3,
                     (pixel_per_cell - 2) / 5,
                     player.number as u8,
                     WHITE
@@ -157,14 +157,14 @@ impl Display {
 
         // Draw ball
         self.draw_square(
-            state.ball.x * pixel_per_cell,
-            state.ball.y * pixel_per_cell,
+            drawable.ball.x * pixel_per_cell,
+            drawable.ball.y * pixel_per_cell,
             pixel_per_cell / 2,
             WHITE
         );
         // Draw ball line
         self.draw_line(
-            state.ball.x * pixel_per_cell,
+            drawable.ball.x * pixel_per_cell,
             RED
         );
 

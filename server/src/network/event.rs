@@ -1,11 +1,15 @@
 use std::net::SocketAddr;
+use crate::gui::drawable::Drawable;
 
 pub enum ClientEvent {
     Disconnected(SocketAddr),
     Initialized {
         addr: SocketAddr,
         field: String,
-        home_players: Vec<String>,
-        away_players: Vec<String>,
+        drawable: Drawable,
+    },
+    DisplayUpdate {
+        addr: SocketAddr,
+        drawable: Drawable,
     },
 }

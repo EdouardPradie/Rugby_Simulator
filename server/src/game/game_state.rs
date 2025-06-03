@@ -1,3 +1,5 @@
+use crate::gui::drawable::Drawable;
+
 #[derive(Clone)]
 pub struct Field {
     pub width: usize,
@@ -33,6 +35,7 @@ pub struct Ball {
     pub y: usize,
 }
 
+#[derive(Clone)]
 pub struct GameState {
     pub field: Field,
     pub home_players: Vec<Player>,
@@ -208,6 +211,32 @@ impl GameState {
         // Initialize ball
         self.ball.x = self.field.width / 2 + self.field.try_size - 1;
         self.ball.y = self.field.height / 2;
+    }
+
+    pub fn positions(&mut self) -> String {
+        let mut result = String::new();
+        result.push_str(&format!("B: {} {}\n", self.ball.x, self.ball.y));
+        for player in &self.home_players {
+            result.push_str(&format!("H{}: {} {}\n",
+                player.number, player.x, player.y));
+        }
+        for player in &self.away_players {
+            result.push_str(&format!("A{}: {} {}\n",
+                player.number, player.x, player.y));
+        }
+        return result;
+    }
+
+    pub fn get_drawable(&self) -> Drawable {
+        let mut drawable = Drawable::new(self.ball.x, self.ball.y);
+
+        for player in &self.home_players {
+            drawable.add_home_player(player.x, player.y, player.number);
+        }
+        for player in &self.away_players {
+            drawable.add_away_player(player.x, player.y, player.number);
+        }
+        return drawable;
     }
 
     pub fn test(&mut self) {
