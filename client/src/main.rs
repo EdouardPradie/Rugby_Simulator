@@ -1,7 +1,9 @@
 use std::env;
-use std::net::TcpStream;
-use std::io::{Write, Read};
 use dotenv::dotenv;
+use std::io::{Write, Read};
+use std::thread;
+use std::time::Duration;
+use std::net::TcpStream;
 
 mod init;
 use init::init_game::initialize_game;
@@ -22,20 +24,36 @@ fn main() {
 
             let input = initialize_game();
 
-            // Send message to server
+            // Send init       message to server
             if let Err(e) = stream.write_all(input.as_bytes()) {
                 println!("Failed to send message: {}", e);
                 return;
             }
 
+            stream.set_nonblocking(true).expect("Failed to set non-blocking");
+
             let mut buffer = [0; 2048];
             // Read response from server
-            match stream.read(&mut buffer) {
-                Ok(bytes_read) => {
-                    println!("Server response: {}", String::from_utf8_lossy(&buffer[..bytes_read]));
-                }
-                Err(e) => {
-                    println!("Failed to read from server: {}", e);
+            loop {
+                match stream.read(&mut buffer) {
+                    Ok(0) => {
+                        // Serveur a fermé la connexion
+                        println!("Server disconnected.");
+                        break;
+                    }
+                    Ok(n) => {
+                        let msg = String::from_utf8_lossy(&buffer[..n]);
+                        println!("\nServer: {}", msg);
+                    }
+                    Err(ref e) if e.kind() == std::io::ErrorKind::WouldBlock => {
+                        // Rien à lire pour le moment
+                        thread::sleep(Duration::from_millis(100));
+                        continue;
+                    }
+                    Err(e) => {
+                        println!("Error while reading: {}", e);
+                        break;
+                    }
                 }
             }
         }

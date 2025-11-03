@@ -20,7 +20,7 @@ pub fn initialize_game() -> String {
     input.push_str(&home.join("\n"));
     input.push_str("\n");
     input.push_str(&away.join("\n"));
-    println!("Send input: {}", input);
+    println!("Input: {}", input);
     return input;
 }
 

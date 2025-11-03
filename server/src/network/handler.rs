@@ -24,7 +24,7 @@ pub fn handle_client(mut stream: TcpStream, display_enable: bool, tx: Sender<Cli
                 break;
             }
             Ok(n) => {
-                // Check if the received data is an "init" message
+                // INIT
                 if buffer.starts_with(b"init") && state == 0 {
                     println!("Initialization message received from {}", addr);
 
@@ -61,10 +61,26 @@ pub fn handle_client(mut stream: TcpStream, display_enable: bool, tx: Sender<Cli
                     state = 1; // Change state to indicate initialization is done
                     let mut response = String::from("start\n");
                     response.push_str(client.positions().as_str());
-                    // if let Err(e) = stream.write_all(response.as_bytes()) {
-                    //     println!("Failed to send player positions: {}", e);
-                    //     break;
-                    // }
+
+                    if let Err(e) = stream.write_all(response.as_bytes()) {
+                        println!("Failed to send player positions: {}", e);
+                        break;
+                    }
+                    continue;
+                }
+
+                // PLAY
+
+                if buffer.starts_with(b"play") && state == 1 {
+                    println!("Update message received from {}", addr);
+                    let input = String::from_utf8_lossy(&buffer[..n]).to_string();
+                    client.play(input);
+                    let response = client.positions();
+
+                    if let Err(e) = stream.write_all(response.as_bytes()) {
+                        println!("Failed to send update response: {}", e);
+                        break;
+                    }
                     continue;
                 }
 

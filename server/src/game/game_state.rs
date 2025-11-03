@@ -18,8 +18,8 @@ pub struct Field {
 pub struct Player {
     pub x: usize,
     pub y: usize,
-    pub team: u8, // 1 or 2
     pub number: usize,
+    pub ball_pos: bool, // true if player has the ball
     pub size: usize,
     pub strength: usize,
     pub speed: usize,
@@ -33,6 +33,7 @@ pub struct Player {
 pub struct Ball {
     pub x: usize,
     pub y: usize,
+    pub is_carried: bool, // true if the ball is being carried by a player
 }
 
 #[derive(Clone)]
@@ -63,7 +64,7 @@ impl GameState {
         let home_bench = Vec::new();
         let away_players = Vec::new();
         let away_bench = Vec::new();
-        let ball = Ball { x: 50, y: 35 };
+        let ball = Ball { x: 50, y: 35, is_carried: false };
 
         Self { field, home_players, home_bench, away_players, away_bench, ball }
     }
@@ -162,9 +163,14 @@ impl GameState {
                 .and_then(|v| v.parse().ok())
                 .unwrap_or(10);
             if i >= 15 {
-                self.home_bench.push(Player { x, y, team: 1, number: (i + 1), size, strength, speed, foot, p_foot, p_tackle, p_scrape});
+                self.home_bench.push(Player { x, y, number: (i + 1), ball_pos: false, size, strength, speed, foot, p_foot, p_tackle, p_scrape});
             } else {
-                self.home_players.push(Player { x, y, team: 1, number: (i + 1), size, strength, speed, foot, p_foot, p_tackle, p_scrape});
+                self.home_players.push(Player { x, y, number: (i + 1), ball_pos: false, size, strength, speed, foot, p_foot, p_tackle, p_scrape});
+                if i == 9 {
+                    // Set the half opener player as the one with the ball
+                    self.home_players[i].ball_pos = true;
+                    self.ball.is_carried = true;
+                }
             }
         }
 
@@ -202,27 +208,41 @@ impl GameState {
                 .and_then(|v| v.parse().ok())
                 .unwrap_or(10);
             if i >= 15 {
-                self.away_bench.push(Player { x, y, team: 2, number: (i + 1), size, strength, speed, foot, p_foot, p_tackle, p_scrape});
+                self.away_bench.push(Player { x, y, number: (i + 1), ball_pos: false, size, strength, speed, foot, p_foot, p_tackle, p_scrape});
             } else {
-                self.away_players.push(Player { x, y, team: 2, number: (i + 1), size, strength, speed, foot, p_foot, p_tackle, p_scrape});
+                self.away_players.push(Player { x, y, number: (i + 1), ball_pos: false, size, strength, speed, foot, p_foot, p_tackle, p_scrape});
             }
         }
 
         // Initialize ball
-        self.ball.x = self.field.width / 2 + self.field.try_size - 1;
-        self.ball.y = self.field.height / 2;
+        self.ball.x = self.home_players[9].x + 1;
+        self.ball.y = self.home_players[9].y;
+    }
+
+    pub fn play (&mut self, input: String) {
+        
     }
 
     pub fn positions(&mut self) -> String {
         let mut result = String::new();
-        result.push_str(&format!("B: {} {}\n", self.ball.x, self.ball.y));
+        if !self.ball.is_carried {
+            result.push_str(&format!("B: {} {}\n", self.ball.x, self.ball.y));
+        }
         for player in &self.home_players {
-            result.push_str(&format!("H{}: {} {}\n",
-                player.number, player.x, player.y));
+            result.push_str(&format!("H{}: {} {}", player.number, player.x, player.y));
+            if player.ball_pos {
+                result.push_str(&format!("/B: {} {}\n", self.ball.x, self.ball.y));
+            } else {
+                result.push('\n');
+            }
         }
         for player in &self.away_players {
-            result.push_str(&format!("A{}: {} {}\n",
-                player.number, player.x, player.y));
+            result.push_str(&format!("A{}: {} {}", player.number, player.x, player.y));
+            if player.ball_pos {
+                result.push_str(&format!("/B: {} {}\n", self.ball.x, self.ball.y));
+            } else {
+                result.push('\n');
+            }
         }
         return result;
     }
