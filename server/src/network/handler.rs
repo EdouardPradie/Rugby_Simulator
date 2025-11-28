@@ -7,7 +7,7 @@ use crate::game::game_state::GameState;
 use crate::network::event::ClientEvent;
 
 /// Handles communication with a single client.
-pub fn handle_client(mut stream: TcpStream, display_enable: bool, tx: Sender<ClientEvent>) {
+pub fn handle_client(mut stream: TcpStream, display_enable: bool, run_time: bool, tx: Sender<ClientEvent>) {
     let mut buffer = [0; 2048];
     let mut state= 0;
     let addr = stream.peer_addr().unwrap();
@@ -24,6 +24,7 @@ pub fn handle_client(mut stream: TcpStream, display_enable: bool, tx: Sender<Cli
                 break;
             }
             Ok(n) => {
+
                 // INIT
                 if buffer.starts_with(b"init") && state == 0 {
                     println!("Initialization message received from {}", addr);
@@ -51,6 +52,7 @@ pub fn handle_client(mut stream: TcpStream, display_enable: bool, tx: Sender<Cli
 
                     client.initialize(field.clone(), home_players, away_players);
                     if display_enable {
+                        std::thread::sleep(std::time::Duration::from_millis(240));
                         let _ = tx.send(ClientEvent::Initialized {
                             addr,
                             field,
@@ -60,29 +62,48 @@ pub fn handle_client(mut stream: TcpStream, display_enable: bool, tx: Sender<Cli
 
                     state = 1; // Change state to indicate initialization is done
                     let mut response = String::from("start\n");
+                    response.push_str(&format!("time:{}\n", &client.time.to_string()));
                     response.push_str(client.positions().as_str());
 
                     if let Err(e) = stream.write_all(response.as_bytes()) {
                         println!("Failed to send player positions: {}", e);
                         break;
                     }
+                    buffer.fill(0);
                     continue;
                 }
 
                 // PLAY
 
                 if buffer.starts_with(b"play") && state == 1 {
-                    println!("Update message received from {}", addr);
                     let input = String::from_utf8_lossy(&buffer[..n]).to_string();
                     client.play(input);
-                    let response = client.positions();
+                    let mut response = String::from("play\n");
+                    response.push_str(&format!("time:{}\n", &client.time.to_string()));
+                    response.push_str(client.positions().as_str());
+
+                    if display_enable {
+                        if run_time {
+                            std::thread::sleep(std::time::Duration::from_millis(200));
+                        }
+                        let _ = tx.send(ClientEvent::DisplayUpdate {
+                            addr,
+                            drawable: client.get_drawable(),
+                        });
+                    }
 
                     if let Err(e) = stream.write_all(response.as_bytes()) {
                         println!("Failed to send update response: {}", e);
                         break;
                     }
+                    buffer.fill(0);
                     continue;
                 }
+
+                // Handle unrecognized input
+                println!("Unrecognized input from {}: {:?}", addr, &buffer[..n]);
+
+                buffer.fill(0); // Clear the buffer to avoid processing leftover data
 
                 // Echo back the received data
                 if let Err(e) = stream.write_all(&buffer[..n]) {

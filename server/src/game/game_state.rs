@@ -16,29 +16,30 @@ pub struct Field {
 
 #[derive(Clone, Copy)]
 pub struct Player {
-    pub x: usize,
-    pub y: usize,
+    pub x: f32,
+    pub y: f32,
     pub number: usize,
     pub ball_pos: bool, // true if player has the ball
-    pub size: usize,
-    pub strength: usize,
-    pub speed: usize,
-    pub foot: usize,
-    pub p_foot: usize,
-    pub p_tackle: usize,
-    pub p_scrape: usize,
+    pub size: f32,
+    pub strength: f32,
+    pub speed: f32,
+    pub foot: f32,
+    pub p_foot: f32,
+    pub p_tackle: f32,
+    pub p_scrape: f32,
 }
 
 #[derive(Clone, Copy)]
 pub struct Ball {
-    pub x: usize,
-    pub y: usize,
+    pub x: f32,
+    pub y: f32,
     pub is_carried: bool, // true if the ball is being carried by a player
 }
 
 #[derive(Clone)]
 pub struct GameState {
     pub field: Field,
+    pub time: u64,
     pub home_players: Vec<Player>,
     pub home_bench: Vec<Player>,
     pub away_players: Vec<Player>,
@@ -60,13 +61,14 @@ impl GameState {
             wind_direction: 0,
             weather: 0,
         };
+        let time = 0;
         let home_players = Vec::new();
         let home_bench = Vec::new();
         let away_players = Vec::new();
         let away_bench = Vec::new();
-        let ball = Ball { x: 50, y: 35, is_carried: false };
+        let ball = Ball { x: 50.0, y: 35.0, is_carried: false };
 
-        Self { field, home_players, home_bench, away_players, away_bench, ball }
+        Self { field, time, home_players, home_bench, away_players, away_bench, ball }
     }
 
     pub fn initialize(&mut self, field: String, home_players: Vec<String>, away_players: Vec<String>) {
@@ -132,36 +134,36 @@ impl GameState {
         // Initialize home players
         for (i, player) in home_players.iter().enumerate() {
             let info: Vec<&str> = player.split('_').collect();
-            let x: usize = self.field.width / 2 + self.field.try_size - 2;
-            let y: usize = 6 + i * 3;
-            let size: usize = info.get(0)
+            let x: f32 = (self.field.width / 2 + self.field.try_size - 2) as f32;
+            let y: f32 = (6 + i * 3) as f32;
+            let size: f32 = info.get(0)
                 .and_then(|s| s.split('=').nth(1))
                 .and_then(|v| v.parse().ok())
-                .unwrap_or(180);
-            let strength: usize = info.get(1)
+                .unwrap_or(180.0);
+            let strength: f32 = info.get(1)
                 .and_then(|s| s.split('=').nth(1))
                 .and_then(|v| v.parse().ok())
-                .unwrap_or(100);
-            let speed: usize = info.get(2)
+                .unwrap_or(100.0);
+            let speed: f32 = info.get(2)
                 .and_then(|s| s.split('=').nth(1))
                 .and_then(|v| v.parse().ok())
-                .unwrap_or(10);
-            let foot: usize = info.get(3)
+                .unwrap_or(10.0);
+            let foot: f32 = info.get(3)
                 .and_then(|s| s.split('=').nth(1))
                 .and_then(|v| v.parse().ok())
-                .unwrap_or(10);
-            let p_foot: usize = info.get(4)
+                .unwrap_or(10.0);
+            let p_foot: f32 = info.get(4)
                 .and_then(|s| s.split('=').nth(1))
                 .and_then(|v| v.parse().ok())
-                .unwrap_or(10);
-            let p_tackle: usize = info.get(5)
+                .unwrap_or(10.0);
+            let p_tackle: f32 = info.get(5)
                 .and_then(|s| s.split('=').nth(1))
                 .and_then(|v| v.parse().ok())
-                .unwrap_or(10);
-            let p_scrape: usize = info.get(6)
+                .unwrap_or(10.0);
+            let p_scrape: f32 = info.get(6)
                 .and_then(|s| s.split('=').nth(1))
                 .and_then(|v| v.parse().ok())
-                .unwrap_or(10);
+                .unwrap_or(10.0);
             if i >= 15 {
                 self.home_bench.push(Player { x, y, number: (i + 1), ball_pos: false, size, strength, speed, foot, p_foot, p_tackle, p_scrape});
             } else {
@@ -177,36 +179,36 @@ impl GameState {
         // Initialize away players
         for (i, player) in away_players.iter().enumerate() {
             let info: Vec<&str> = player.split('_').collect();
-            let x: usize = (self.field.width + 2 * self.field.try_size) * 3 / 4;
-            let y: usize = 6 + i * 3;
-            let size: usize = info.get(0)
+            let x: f32 = ((self.field.width + 2 * self.field.try_size) * 3 / 4) as f32;
+            let y: f32 = (6 + i * 3) as f32;
+            let size: f32 = info.get(0)
                 .and_then(|s| s.split('=').nth(1))
                 .and_then(|v| v.parse().ok())
-                .unwrap_or(180);
-            let strength: usize = info.get(1)
+                .unwrap_or(180.0);
+            let strength: f32 = info.get(1)
                 .and_then(|s| s.split('=').nth(1))
                 .and_then(|v| v.parse().ok())
-                .unwrap_or(100);
-            let speed: usize = info.get(2)
+                .unwrap_or(100.0);
+            let speed: f32 = info.get(2)
                 .and_then(|s| s.split('=').nth(1))
                 .and_then(|v| v.parse().ok())
-                .unwrap_or(10);
-            let foot: usize = info.get(3)
+                .unwrap_or(10.0);
+            let foot: f32 = info.get(3)
                 .and_then(|s| s.split('=').nth(1))
                 .and_then(|v| v.parse().ok())
-                .unwrap_or(10);
-            let p_foot: usize = info.get(4)
+                .unwrap_or(10.0);
+            let p_foot: f32 = info.get(4)
                 .and_then(|s| s.split('=').nth(1))
                 .and_then(|v| v.parse().ok())
-                .unwrap_or(10);
-            let p_tackle: usize = info.get(4)
+                .unwrap_or(10.0);
+            let p_tackle: f32 = info.get(4)
                 .and_then(|s| s.split('=').nth(1))
                 .and_then(|v| v.parse().ok())
-                .unwrap_or(10);
-            let p_scrape: usize = info.get(4)
+                .unwrap_or(10.0);
+            let p_scrape: f32 = info.get(4)
                 .and_then(|s| s.split('=').nth(1))
                 .and_then(|v| v.parse().ok())
-                .unwrap_or(10);
+                .unwrap_or(10.0);
             if i >= 15 {
                 self.away_bench.push(Player { x, y, number: (i + 1), ball_pos: false, size, strength, speed, foot, p_foot, p_tackle, p_scrape});
             } else {
@@ -215,20 +217,33 @@ impl GameState {
         }
 
         // Initialize ball
-        self.ball.x = self.home_players[9].x + 1;
+        self.ball.x = self.home_players[9].x + 1.0;
         self.ball.y = self.home_players[9].y;
     }
 
-    pub fn play (&mut self, input: String) {
-        
+    pub fn play(&mut self, input: String) {
+        self.time += 25;
+
+        let actions: Vec<&str> = input.split('\n').collect();
+        for action in actions {
+            if let Some((player, action)) = action.split_once(':') {
+                if action.starts_with("R") {
+                    let team = player.chars().next().unwrap();
+                    let number = player[1..].parse().unwrap_or(0);
+                    let direction = &action[1..];
+                    // println!("Player {}{} runs {}", team, number, direction);
+                    self.run(team, number, direction);
+                }
+            }
+        }
     }
 
-    pub fn positions(&mut self) -> String {
+    pub fn positions(&self) -> String {
         let mut result = String::new();
         if !self.ball.is_carried {
             result.push_str(&format!("B: {} {}\n", self.ball.x, self.ball.y));
         }
-        for player in &self.home_players {
+        for player in self.home_players.iter() {
             result.push_str(&format!("H{}: {} {}", player.number, player.x, player.y));
             if player.ball_pos {
                 result.push_str(&format!("/B: {} {}\n", self.ball.x, self.ball.y));
@@ -236,7 +251,7 @@ impl GameState {
                 result.push('\n');
             }
         }
-        for player in &self.away_players {
+        for player in self.away_players.iter() {
             result.push_str(&format!("A{}: {} {}", player.number, player.x, player.y));
             if player.ball_pos {
                 result.push_str(&format!("/B: {} {}\n", self.ball.x, self.ball.y));
@@ -244,7 +259,7 @@ impl GameState {
                 result.push('\n');
             }
         }
-        return result;
+        result
     }
 
     pub fn get_drawable(&self) -> Drawable {
@@ -256,26 +271,207 @@ impl GameState {
         for player in &self.away_players {
             drawable.add_away_player(player.x, player.y, player.number);
         }
+        drawable.set_time(self.time);
         return drawable;
     }
 
-    pub fn test(&mut self) {
-        // Simple random movement placeholder (for testing)
-        for player in &mut self.home_players {
-            player.x = (player.x + 1) % 75;
-            if player.x == 0 {
-                player.x = 10
+    fn run(&mut self, team: char, number: i32, direction: &str) {
+        if team == 'H' {
+            if let Some(p) = self.home_players.iter_mut().find(|p| p.number == number as usize) {
+                match direction {
+                    "N" => {
+                        if p.x < (self.field.width + (self.field.try_size * 2)) as f32 {
+                            p.x += p.speed * 0.069444;
+                            if p.ball_pos {
+                                self.ball.x += p.speed * 0.069444;
+                            }
+                        }
+                    }
+                    "S" => {
+                        if p.x > 0.0 {
+                            p.x -= p.speed * 0.069444;
+                            if p.ball_pos {
+                                self.ball.x -= p.speed * 0.069444;
+                            }
+                        }
+                    }
+                    "E" => {
+                        if p.y < self.field.height  as f32 {
+                            p.y += p.speed * 0.069444;
+                            if p.ball_pos {
+                                self.ball.y += p.speed * 0.069444;
+                            }
+                        }
+                    }
+                    "W" => {
+                        if p.y > 0.0 {
+                            p.y -= p.speed * 0.069444;
+                            if p.ball_pos {
+                                self.ball.y -= p.speed * 0.069444;
+                            }
+                        }
+                    }
+                    "A" => {
+                        // Diagonal NW
+                        if p.x < (self.field.width + (self.field.try_size * 2)) as f32 {
+                            p.x += p.speed * 0.069444;
+                            if p.ball_pos {
+                                self.ball.x += p.speed * 0.069444;
+                            }
+                        }
+                        if p.y > 0.0 {
+                            p.y -= p.speed * 0.069444;
+                            if p.ball_pos {
+                                self.ball.y -= p.speed * 0.069444;
+                            }
+                        }
+                    }
+                    "B" => {
+                        // Diagonal NE
+                        if p.x < (self.field.width + (self.field.try_size * 2)) as f32 {
+                            p.x += p.speed * 0.069444;
+                            if p.ball_pos {
+                                self.ball.x += p.speed * 0.069444;
+                            }
+                        }
+                        if p.y < (self.field.height) as f32 {
+                            p.y += p.speed * 0.069444;
+                            if p.ball_pos {
+                                self.ball.y += p.speed * 0.069444;
+                            }
+                        }
+                    }
+                    "C" => {
+                        // Diagonal SW
+                        if p.x > 0.0 {
+                            p.x -= p.speed * 0.069444;
+                            if p.ball_pos {
+                                self.ball.x -= p.speed * 0.069444;
+                            }
+                        }
+                        if p.y > 0.0 {
+                            p.y -= p.speed * 0.069444;
+                            if p.ball_pos {
+                                self.ball.y -= p.speed * 0.069444;
+                            }
+                        }
+                    }
+                    "D" => {
+                        // Diagonal SE
+                        if p.x > 0.0 {
+                            p.x -= p.speed * 0.069444;
+                            if p.ball_pos {
+                                self.ball.x -= p.speed * 0.069444;
+                            }
+                        }
+                        if p.y < (self.field.height) as f32 {
+                            p.y += p.speed * 0.069444;
+                            if p.ball_pos {
+                                self.ball.y += p.speed * 0.069444;
+                            }
+                        }
+                    }
+                    _ => {}
+                }
             }
-        }
-        for player in &mut self.away_players {
-            player.x = (player.x + 1) % 75;
-            if player.x == 0 {
-                player.x = 10
+        } else if team == 'A' {
+            if let Some(p) = self.away_players.iter_mut().find(|p| p.number == number as usize) {
+                match direction {
+                    "N" => {
+                        if p.x < (self.field.width + (self.field.try_size * 2)) as f32 {
+                            p.x += p.speed * 0.069444;
+                            if p.ball_pos {
+                                self.ball.x += p.speed * 0.069444;
+                            }
+                        }
+                    }
+                    "S" => {
+                        if p.x > 0.0 {
+                            p.x -= p.speed * 0.069444;
+                            if p.ball_pos {
+                                self.ball.x -= p.speed * 0.069444;
+                            }
+                        }
+                    }
+                    "E" => {
+                        if p.y < (self.field.height) as f32 {
+                            p.y += p.speed * 0.069444;
+                            if p.ball_pos {
+                                self.ball.y += p.speed * 0.069444;
+                            }
+                        }
+                    }
+                    "W" => {
+                        if p.y > 0.0 {
+                            p.y -= p.speed * 0.069444;
+                            if p.ball_pos {
+                                self.ball.y -= p.speed * 0.069444;
+                            }
+                        }
+                    }
+                    "A" => {
+                        // Diagonal NW
+                        if p.x < (self.field.width + (self.field.try_size * 2)) as f32 {
+                            p.x += p.speed * 0.069444;
+                            if p.ball_pos {
+                                self.ball.x += p.speed * 0.069444;
+                            }
+                        }
+                        if p.y > 0.0 {
+                            p.y -= p.speed * 0.069444;
+                            if p.ball_pos {
+                                self.ball.y -= p.speed * 0.069444;
+                            }
+                        }
+                    }
+                    "B" => {
+                        // Diagonal NE
+                        if p.x < (self.field.width + (self.field.try_size * 2)) as f32 {
+                            p.x += p.speed * 0.069444;
+                            if p.ball_pos {
+                                self.ball.x += p.speed * 0.069444;
+                            }
+                        }
+                        if p.y < self.field.height as f32 {
+                            p.y += p.speed * 0.069444;
+                            if p.ball_pos {
+                                self.ball.y += p.speed * 0.069444;
+                            }
+                        }
+                    }
+                    "C" => {
+                        // Diagonal SW
+                        if p.x > 0.0 {
+                            p.x -= p.speed * 0.069444;
+                            if p.ball_pos {
+                                self.ball.x -= p.speed * 0.069444;
+                            }
+                        }
+                        if p.y > 0.0 {
+                            p.y -= p.speed * 0.069444;
+                            if p.ball_pos {
+                                self.ball.y -= p.speed * 0.069444;
+                            }
+                        }
+                    }
+                    "D" => {
+                        // Diagonal SE
+                        if p.x > 0.0 {
+                            p.x -= p.speed * 0.069444;
+                            if p.ball_pos {
+                                self.ball.x -= p.speed * 0.069444;
+                            }
+                        }
+                        if p.y < self.field.height as f32 {
+                            p.y += p.speed * 0.069444;
+                            if p.ball_pos {
+                                self.ball.y += p.speed * 0.069444;
+                            }
+                        }
+                    }
+                    _ => {}
+                }
             }
-        }
-        self.ball.x = (self.ball.x + 1) % 75;
-        if self.ball.x == 0 {
-            self.ball.x = 10
         }
     }
 }

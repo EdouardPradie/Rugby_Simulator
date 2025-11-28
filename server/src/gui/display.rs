@@ -29,6 +29,7 @@ pub struct Display {
     height: usize,
     size: usize,
     try_size: usize,
+    time: u64,
     is_initialized: bool,
 }
 
@@ -44,9 +45,10 @@ impl Display {
             panic!("Unable to open window: {}", e);
         });
         let buffer: Vec<u32> = vec![GROUND_COLOR; size * height];
+        let time = 0;
         let is_initialized = false;
 
-        Self { window, buffer, width, height, size, try_size, is_initialized }
+        Self { window, buffer, width, height, size, try_size, time, is_initialized }
     }
 
     pub fn initialize(&mut self, field: String, pixel_per_cell: usize) {
@@ -87,33 +89,46 @@ impl Display {
         // Clear field
         self.draw_field(pixel_per_cell);
 
+        // Draw ball
+        self.draw_square(
+            (drawable.ball.x * (pixel_per_cell) as f32) as usize,
+            (drawable.ball.y * (pixel_per_cell) as f32) as usize,
+            pixel_per_cell / 2,
+            WHITE
+        );
+        // Draw ball line
+        self.draw_line(
+            (drawable.ball.x * (pixel_per_cell) as f32) as usize,
+            RED
+        );
+
         // Draw home players
         for player in &drawable.home_players {
             self.draw_square(
-                player.pos.x * pixel_per_cell,
-                player.pos.y * pixel_per_cell,
+                (player.pos.x * (pixel_per_cell) as f32) as usize,
+                (player.pos.y * (pixel_per_cell) as f32) as usize,
                 pixel_per_cell - 2,
                 TEAM1
             );
             if player.number > 9 {
                 self.draw_digit(
-                    player.pos.x * pixel_per_cell - (pixel_per_cell - 2) / 2 + 1,
-                    player.pos.y * pixel_per_cell - (pixel_per_cell - 2) / 3,
+                    (player.pos.x * (pixel_per_cell) as f32) as usize - (pixel_per_cell - 2) / 2 + 1,
+                    (player.pos.y * (pixel_per_cell) as f32) as usize - (pixel_per_cell - 2) / 3,
                     (pixel_per_cell - 2) / 5,
                     (player.number / 10) as u8,
                     WHITE
                 );
                 self.draw_digit(
-                    player.pos.x * pixel_per_cell + 1,
-                    player.pos.y * pixel_per_cell - (pixel_per_cell - 2) / 3,
+                    (player.pos.x * (pixel_per_cell) as f32) as usize + 1,
+                    (player.pos.y * (pixel_per_cell) as f32) as usize - (pixel_per_cell - 2) / 3,
                     (pixel_per_cell - 2) / 5,
                     (player.number % 10) as u8,
                     WHITE
                 );
             } else {
                 self.draw_digit(
-                    player.pos.x * pixel_per_cell - (pixel_per_cell - 2) / 5,
-                    player.pos.y * pixel_per_cell - (pixel_per_cell - 2) / 3,
+                    (player.pos.x * (pixel_per_cell) as f32) as usize - (pixel_per_cell - 2) / 5,
+                    (player.pos.y * (pixel_per_cell) as f32) as usize - (pixel_per_cell - 2) / 3,
                     (pixel_per_cell - 2) / 5,
                     player.number as u8,
                     WHITE
@@ -124,30 +139,30 @@ impl Display {
         // Draw away players
         for player in &drawable.away_players {
             self.draw_square(
-                player.pos.x * pixel_per_cell,
-                player.pos.y * pixel_per_cell,
+                (player.pos.x * (pixel_per_cell) as f32) as usize,
+                (player.pos.y * (pixel_per_cell) as f32) as usize,
                 pixel_per_cell - 2,
                 TEAM2
             );
             if player.number > 9 {
                 self.draw_digit(
-                    player.pos.x * pixel_per_cell - (pixel_per_cell - 2) / 2 + 1,
-                    player.pos.y * pixel_per_cell - (pixel_per_cell - 2) / 3,
+                    (player.pos.x * (pixel_per_cell) as f32) as usize - (pixel_per_cell - 2) / 2 + 1,
+                    (player.pos.y * (pixel_per_cell) as f32) as usize - (pixel_per_cell - 2) / 3,
                     (pixel_per_cell - 2) / 5,
                     (player.number / 10) as u8,
                     WHITE
                 );
                 self.draw_digit(
-                    player.pos.x * pixel_per_cell + 1,
-                    player.pos.y * pixel_per_cell - (pixel_per_cell - 2) / 3,
+                    (player.pos.x * (pixel_per_cell) as f32) as usize + 1,
+                    (player.pos.y * (pixel_per_cell) as f32) as usize - (pixel_per_cell - 2) / 3,
                     (pixel_per_cell - 2) / 5,
                     (player.number % 10) as u8,
                     WHITE
                 );
             } else {
                 self.draw_digit(
-                    player.pos.x * pixel_per_cell - (pixel_per_cell - 2) / 5,
-                    player.pos.y * pixel_per_cell - (pixel_per_cell - 2) / 3,
+                    (player.pos.x * (pixel_per_cell) as f32) as usize - (pixel_per_cell - 2) / 5,
+                    (player.pos.y * (pixel_per_cell) as f32) as usize - (pixel_per_cell - 2) / 3,
                     (pixel_per_cell - 2) / 5,
                     player.number as u8,
                     WHITE
@@ -155,19 +170,8 @@ impl Display {
             }
         }
 
-        // Draw ball
-        self.draw_square(
-            drawable.ball.x * pixel_per_cell,
-            drawable.ball.y * pixel_per_cell,
-            pixel_per_cell / 2,
-            WHITE
-        );
-        // Draw ball line
-        self.draw_line(
-            drawable.ball.x * pixel_per_cell,
-            RED
-        );
-
+        // Draw time
+        self.draw_time(drawable.time, pixel_per_cell);
 
         // Update the window
         self.window
@@ -321,6 +325,52 @@ impl Display {
                 self.buffer[j * self.size + (self.size - self.try_size - (40 * pixel_per_cell) - 2)] = GROUND_LINE_COLOR;
             }
         }
+    }
+
+    fn draw_time(&mut self, time: u64, pixel_per_cell: usize) {
+        self.time = time / 100;
+        let minutes = self.time / 60;
+        let seconds = self.time % 60;
+
+        // Draw minutes
+        self.draw_digit(
+            15,
+            15,
+            pixel_per_cell / 2,
+            (minutes / 10) as u8,
+            WHITE
+        );
+        self.draw_digit(
+            15 + (pixel_per_cell * 2),
+            15,
+            pixel_per_cell / 2,
+            (minutes % 10) as u8,
+            WHITE
+        );
+
+        // Draw colon
+        for i in 0..(pixel_per_cell / 2) {
+            for j in 0..(pixel_per_cell / 2) {
+                self.buffer[(18 + i) * self.size + (15 + pixel_per_cell * 4 + j)] = WHITE;
+                self.buffer[(22 + i + pixel_per_cell) * self.size + (15 + pixel_per_cell * 4 + j)] = WHITE;
+            }
+        }
+
+        // Draw seconds
+        self.draw_digit(
+            15 + (pixel_per_cell * 5),
+            15,
+            pixel_per_cell / 2,
+            (seconds / 10) as u8,
+            WHITE
+        );
+        self.draw_digit(
+            15 + (pixel_per_cell * 7),
+            15,
+            pixel_per_cell / 2,
+            (seconds % 10) as u8,
+            WHITE
+        );
     }
 
     pub fn close(&mut self) {

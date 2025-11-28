@@ -8,6 +8,9 @@ use std::net::TcpStream;
 mod init;
 use init::init_game::initialize_game;
 
+mod ai;
+use ai::take_decision::take_decision;
+
 fn main() {
     // Load environment variables from .env file
     dotenv().ok();
@@ -43,7 +46,12 @@ fn main() {
                     }
                     Ok(n) => {
                         let msg = String::from_utf8_lossy(&buffer[..n]);
-                        println!("\nServer: {}", msg);
+
+                        let decision = take_decision(msg.as_ref());
+                        if let Err(e) = stream.write_all(decision.as_bytes()) {
+                            println!("Failed to send decision: {}", e);
+                            break;
+                        }
                     }
                     Err(ref e) if e.kind() == std::io::ErrorKind::WouldBlock => {
                         // Rien à lire pour le moment

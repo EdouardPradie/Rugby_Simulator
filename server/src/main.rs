@@ -30,6 +30,7 @@ fn main() {
 
     // Initialize display availability
     let display_enable: bool = env::var("DISPLAY").unwrap_or("false".to_string()).to_lowercase() == "true";
+    let run_time: bool = env::var("RUN_TIME").unwrap_or("false".to_string()).to_lowercase() == "true";
     let pixel_per_cell: usize = env::var("PIXEL_SIZE").unwrap_or("0".to_string()).parse().unwrap();
     let mut displays: HashMap<SocketAddr, Display> = HashMap::new();
     let mut drawables: HashMap<SocketAddr, Drawable> = HashMap::new();
@@ -64,8 +65,9 @@ fn main() {
                 }
                 let tx_clone = tx.clone();
                 let display_enable_clone = display_enable.clone();
+                let run_time_clone = run_time.clone();
                 thread::spawn(move || {
-                    handle_client(stream, display_enable_clone, tx_clone);
+                    handle_client(stream, display_enable_clone, run_time_clone, tx_clone);
                 });
             }
             Err(ref e) if e.kind() == std::io::ErrorKind::WouldBlock => {
