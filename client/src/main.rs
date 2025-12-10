@@ -9,7 +9,7 @@ mod init;
 use init::init_game::initialize_game;
 
 mod ai;
-use ai::take_decision::take_decision;
+use ai::take_decision::sleep_for_test;
 
 fn main() {
     // Load environment variables from .env file
@@ -35,26 +35,24 @@ fn main() {
 
             stream.set_nonblocking(true).expect("Failed to set non-blocking");
 
-            let mut buffer = [0; 2048];
+            let mut buffer = [0; 2500];
             // Read response from server
             loop {
                 match stream.read(&mut buffer) {
                     Ok(0) => {
-                        // Serveur a fermé la connexion
                         println!("Server disconnected.");
                         break;
                     }
                     Ok(n) => {
                         let msg = String::from_utf8_lossy(&buffer[..n]);
 
-                        let decision = take_decision(msg.as_ref());
+                        let decision = sleep_for_test(msg.as_ref());
                         if let Err(e) = stream.write_all(decision.as_bytes()) {
                             println!("Failed to send decision: {}", e);
                             break;
                         }
                     }
                     Err(ref e) if e.kind() == std::io::ErrorKind::WouldBlock => {
-                        // Rien à lire pour le moment
                         thread::sleep(Duration::from_millis(100));
                         continue;
                     }

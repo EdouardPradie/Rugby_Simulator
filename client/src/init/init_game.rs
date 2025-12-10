@@ -3,6 +3,7 @@ use std::io::Read;
 
 pub fn initialize_game() -> String {
     let field: String = open_file("asset/field.txt");
+    let state: String = open_file("asset/state.txt");
     let mut home: Vec<String> = vec![];
     let mut away: Vec<String> = vec![];
     let mut input: String = String::new();
@@ -20,6 +21,8 @@ pub fn initialize_game() -> String {
     input.push_str(&home.join("\n"));
     input.push_str("\n");
     input.push_str(&away.join("\n"));
+    input.push_str("\n");
+    input.push_str(&state);
     println!("Input: {}", input);
     return input;
 }

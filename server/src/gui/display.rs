@@ -7,7 +7,9 @@ const GROUND_OUT_COLOR: u32 = 0xFFD9D9D9;
 const TEAM1: u32 = 0xFFA12222;
 const TEAM2: u32 = 0xFF000000;
 const WHITE: u32 = 0xFFFFFFFF;
-const RED: u32 = 0xFFFF0000;
+const BLACK: u32 = 0xFF000000;
+const SCRUM: u32 = 0xFFB195EE;
+const SCRUM_LINE: u32 = 0xFF9267EE;
 
 const FONT_3X5: [[&str; 5]; 10] = [
     [ "111", "101", "101", "101", "111" ], // 0
@@ -89,46 +91,60 @@ impl Display {
         // Clear field
         self.draw_field(pixel_per_cell);
 
+        // Draw state
+        match drawable.state.name.as_str() {
+            "scrum" => {
+                self.draw_diamond(
+                    (drawable.state.pos.x * pixel_per_cell as f32) as usize,
+                    (drawable.state.pos.y * pixel_per_cell as f32) as usize,
+                    (drawable.state.size * pixel_per_cell as f32) as usize,
+                    SCRUM,
+                    SCRUM_LINE
+                );
+            },
+            _ => {}
+        }
+
         // Draw ball
         self.draw_square(
-            (drawable.ball.x * (pixel_per_cell) as f32) as usize,
-            (drawable.ball.y * (pixel_per_cell) as f32) as usize,
+            (drawable.ball.x * pixel_per_cell as f32) as usize,
+            (drawable.ball.y * pixel_per_cell as f32) as usize,
             pixel_per_cell / 2,
             WHITE
         );
         // Draw ball line
         self.draw_line(
-            (drawable.ball.x * (pixel_per_cell) as f32) as usize,
-            RED
+            (drawable.ball.x * pixel_per_cell as f32) as usize,
+            BLACK
         );
 
         // Draw home players
         for player in &drawable.home_players {
             self.draw_square(
-                (player.pos.x * (pixel_per_cell) as f32) as usize,
-                (player.pos.y * (pixel_per_cell) as f32) as usize,
+                (player.pos.x * pixel_per_cell as f32) as usize,
+                (player.pos.y * pixel_per_cell as f32) as usize,
                 pixel_per_cell - 2,
                 TEAM1
             );
             if player.number > 9 {
                 self.draw_digit(
-                    (player.pos.x * (pixel_per_cell) as f32) as usize - (pixel_per_cell - 2) / 2 + 1,
-                    (player.pos.y * (pixel_per_cell) as f32) as usize - (pixel_per_cell - 2) / 3,
+                    (player.pos.x * pixel_per_cell as f32) as usize - (pixel_per_cell - 2) / 2 + 1,
+                    (player.pos.y * pixel_per_cell as f32) as usize - (pixel_per_cell - 2) / 3,
                     (pixel_per_cell - 2) / 5,
                     (player.number / 10) as u8,
                     WHITE
                 );
                 self.draw_digit(
-                    (player.pos.x * (pixel_per_cell) as f32) as usize + 1,
-                    (player.pos.y * (pixel_per_cell) as f32) as usize - (pixel_per_cell - 2) / 3,
+                    (player.pos.x * pixel_per_cell as f32) as usize + 1,
+                    (player.pos.y * pixel_per_cell as f32) as usize - (pixel_per_cell - 2) / 3,
                     (pixel_per_cell - 2) / 5,
                     (player.number % 10) as u8,
                     WHITE
                 );
             } else {
                 self.draw_digit(
-                    (player.pos.x * (pixel_per_cell) as f32) as usize - (pixel_per_cell - 2) / 5,
-                    (player.pos.y * (pixel_per_cell) as f32) as usize - (pixel_per_cell - 2) / 3,
+                    (player.pos.x * pixel_per_cell as f32) as usize - (pixel_per_cell - 2) / 5,
+                    (player.pos.y * pixel_per_cell as f32) as usize - (pixel_per_cell - 2) / 3,
                     (pixel_per_cell - 2) / 5,
                     player.number as u8,
                     WHITE
@@ -139,30 +155,30 @@ impl Display {
         // Draw away players
         for player in &drawable.away_players {
             self.draw_square(
-                (player.pos.x * (pixel_per_cell) as f32) as usize,
-                (player.pos.y * (pixel_per_cell) as f32) as usize,
+                (player.pos.x * pixel_per_cell as f32) as usize,
+                (player.pos.y * pixel_per_cell as f32) as usize,
                 pixel_per_cell - 2,
                 TEAM2
             );
             if player.number > 9 {
                 self.draw_digit(
-                    (player.pos.x * (pixel_per_cell) as f32) as usize - (pixel_per_cell - 2) / 2 + 1,
-                    (player.pos.y * (pixel_per_cell) as f32) as usize - (pixel_per_cell - 2) / 3,
+                    (player.pos.x * pixel_per_cell as f32) as usize - (pixel_per_cell - 2) / 2 + 1,
+                    (player.pos.y * pixel_per_cell as f32) as usize - (pixel_per_cell - 2) / 3,
                     (pixel_per_cell - 2) / 5,
                     (player.number / 10) as u8,
                     WHITE
                 );
                 self.draw_digit(
-                    (player.pos.x * (pixel_per_cell) as f32) as usize + 1,
-                    (player.pos.y * (pixel_per_cell) as f32) as usize - (pixel_per_cell - 2) / 3,
+                    (player.pos.x * pixel_per_cell as f32) as usize + 1,
+                    (player.pos.y * pixel_per_cell as f32) as usize - (pixel_per_cell - 2) / 3,
                     (pixel_per_cell - 2) / 5,
                     (player.number % 10) as u8,
                     WHITE
                 );
             } else {
                 self.draw_digit(
-                    (player.pos.x * (pixel_per_cell) as f32) as usize - (pixel_per_cell - 2) / 5,
-                    (player.pos.y * (pixel_per_cell) as f32) as usize - (pixel_per_cell - 2) / 3,
+                    (player.pos.x * pixel_per_cell as f32) as usize - (pixel_per_cell - 2) / 5,
+                    (player.pos.y * pixel_per_cell as f32) as usize - (pixel_per_cell - 2) / 3,
                     (pixel_per_cell - 2) / 5,
                     player.number as u8,
                     WHITE
@@ -183,8 +199,8 @@ impl Display {
         for dy in 0..size {
             for dx in 0..size {
                 let px: usize = x + dx - (size / 2);
-                let py = y + dy - (size / 2);
-                if px < self.size && py < self.height {
+                let py: usize = y + dy - (size / 2);
+                if py * self.size + px < self.size * self.height {
                     self.buffer[py * self.size + px] = color;
                 }
             }
@@ -193,7 +209,48 @@ impl Display {
 
     fn draw_line(&mut self, x: usize, color: u32) {
         for i in 0..self.height {
+            if  i * self.size + x >= self.size * self.height {
+                continue;
+            }
             self.buffer[i * self.size + x] = color;
+        }
+    }
+
+    fn draw_diamond(
+        &mut self,
+        x: usize,
+        y: usize,
+        radius: usize,
+        fill_color: u32,
+        border_color: u32
+    ) {
+        let cx = x as isize;
+        let cy = y as isize;
+        let r = radius as isize;
+
+        for dy in -r..=r {
+            for dx in -r..=r {
+                let manhattan = dx.abs() + dy.abs();
+
+                if manhattan <= r {
+                    let px = cx + dx;
+                    let py = cy + dy;
+
+                    if px >= 0 && py >= 0 &&
+                       (px as usize) < self.size &&
+                       (py as usize) < self.height
+                    {
+                        let idx = (py as usize) * self.size + (px as usize);
+
+                        let color = if manhattan == r {
+                            border_color
+                        } else {
+                            fill_color
+                        };
+                        self.buffer[idx] = color;
+                    }
+                }
+            }
         }
     }
 

@@ -8,8 +8,8 @@ use crate::network::event::ClientEvent;
 
 /// Handles communication with a single client.
 pub fn handle_client(mut stream: TcpStream, display_enable: bool, run_time: bool, tx: Sender<ClientEvent>) {
-    let mut buffer = [0; 2048];
-    let mut state= 0;
+    let mut buffer = [0; 2500];
+    let mut status= 0;
     let addr = stream.peer_addr().unwrap();
     // Initialize the client environment
     let mut client = GameState::new();
@@ -26,11 +26,12 @@ pub fn handle_client(mut stream: TcpStream, display_enable: bool, run_time: bool
             Ok(n) => {
 
                 // INIT
-                if buffer.starts_with(b"init") && state == 0 {
+                if buffer.starts_with(b"init") && status == 0 {
                     println!("Initialization message received from {}", addr);
 
                     let tmp  = buffer.split(|&byte| byte == b'\n');
                     let mut field: String = String::new();
+                    let mut state: String = String::new();
                     let mut home_players: Vec<String> = Vec::new();
                     let mut away_players: Vec<String> = Vec::new();
 
@@ -44,13 +45,19 @@ pub fn handle_client(mut stream: TcpStream, display_enable: bool, run_time: bool
                         } else if index <= 24 {
                             // The next 23 parts are home players
                             home_players.push(std::str::from_utf8(part).expect("Invalid UTF-8 sequence").to_string());
-                        } else {
+                        } else if index > 24 && index <= 47 {
                             // The remaining parts are away players
                             away_players.push(std::str::from_utf8(part).expect("Invalid UTF-8 sequence").to_string());
+                        } else if index == 48 {
+                            // The remaining parts are away players
+                            let cleaned = part.split(|&b| b == 0).next().unwrap();
+                            state = String::from_utf8_lossy(cleaned).to_string();
+                        } else {
+                            print!("Extra data received during initialization from {}: {:?}\n", addr, std::str::from_utf8(part).expect("Invalid UTF-8 sequence").to_string());
                         }
                     }
 
-                    client.initialize(field.clone(), home_players, away_players);
+                    client.initialize(field.clone(), home_players, away_players, state);
                     if display_enable {
                         std::thread::sleep(std::time::Duration::from_millis(240));
                         let _ = tx.send(ClientEvent::Initialized {
@@ -60,8 +67,8 @@ pub fn handle_client(mut stream: TcpStream, display_enable: bool, run_time: bool
                         });
                     }
 
-                    state = 1; // Change state to indicate initialization is done
-                    let mut response = String::from("start\n");
+                    status = 1; // Change state to indicate initialization is done
+                    let mut response = format!("{}\n", client.state.name);
                     response.push_str(&format!("time:{}\n", &client.time.to_string()));
                     response.push_str(client.positions().as_str());
 
@@ -75,10 +82,10 @@ pub fn handle_client(mut stream: TcpStream, display_enable: bool, run_time: bool
 
                 // PLAY
 
-                if buffer.starts_with(b"play") && state == 1 {
-                    let input = String::from_utf8_lossy(&buffer[..n]).to_string();
+                if (buffer.starts_with(b"play") || buffer.starts_with(b"scrum")) && status == 1 {
+                    let input: String = String::from_utf8_lossy(&buffer[..n]).to_string();
                     client.play(input);
-                    let mut response = String::from("play\n");
+                    let mut response = format!("{}\n", client.state.name);
                     response.push_str(&format!("time:{}\n", &client.time.to_string()));
                     response.push_str(client.positions().as_str());
 
@@ -102,7 +109,6 @@ pub fn handle_client(mut stream: TcpStream, display_enable: bool, run_time: bool
 
                 // Handle unrecognized input
                 println!("Unrecognized input from {}: {:?}", addr, &buffer[..n]);
-
                 buffer.fill(0); // Clear the buffer to avoid processing leftover data
 
                 // Echo back the received data

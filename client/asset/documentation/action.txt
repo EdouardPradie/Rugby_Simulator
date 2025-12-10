@@ -1,17 +1,45 @@
-Lettre /        Action      /      Usage
-R	   / Run - Move forward / Avance - recule
-T      /       Tackle       /    Plaquage
-P      /        Pass        / Passe de balle
-K      /        Kick        /  Coup de pied
-S      /     Stop - Stay    /  Ne bouge pas
+Lettre /       Action       /      Usage
+R	   /        Run         /     Courir      ✅
+W	   /        Walk        /     Avance      ✅
+T      /       Tackle       /    Plaquage     ❌
+P      /        Pass        / Passe de balle  ✅
+K      /        Kick        /  Coup de pied   ✅
+S      /     Stop - Stay    /  Ne bouge pas   ✅
 
 
-Caractère / Direction / Interprétation terrain
-E         /   East	  / Vers la droite
-W         /   West	  / Vers la gauche
-N         /   North	  / Vers le haut
-S         /   South	  / Vers le bas
-A         / Northwest / Diagonale haut-gauche
-B         / Northeast / Diagonale haut-droite
-C         / Southwest / Diagonale bas-gauche
-D         / Southeast / Diagonale bas-droite
+Field
+GROUND_COLOR= #66D575
+GROUND_LINE_COLOR= #CDF4D3
+GROUND_OUT_COLOR= #D9D9D9
+
+Team
+TEAM1= #A12222;
+TEAM2= #000000;
+
+Ball
+BALL_COLOR= #FFFAFA
+BALL_LINE_COLOR= #000000
+
+Scrum
+SCRUM= #b195ee
+SCRUM_LINE= #9267ee
+
+Penalty
+PENALTY_COLOR= #C6FAF6
+PENALTY_BUDDIES_COLOR= #5AD8CC
+
+Ruck
+RUCK= #00dfff
+RUCK_LINE= #20c2db
+
+Mole
+MOLE= #ffcf00
+MOLE_LINE #be9d09
+
+Line-out
+LINE_OUT= #ff7f00
+LINE_OUT_LINE= #bd5e00
+
+Offside
+OFFSIDE= #dd7162
+OFFSIDE_LINE= #e63319
