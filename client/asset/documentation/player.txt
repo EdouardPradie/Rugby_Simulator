@@ -4,4 +4,3 @@ ms = speed
 fd = foot kick distance
 %f = percentage of foot kick
 %t = percentage of tackle
-%s = percentage of steel

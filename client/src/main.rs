@@ -9,7 +9,7 @@ mod init;
 use init::init_game::initialize_game;
 
 mod ai;
-use ai::take_decision::sleep_for_test;
+use ai::take_decision::ruck_test;
 
 fn main() {
     // Load environment variables from .env file
@@ -46,7 +46,7 @@ fn main() {
                     Ok(n) => {
                         let msg = String::from_utf8_lossy(&buffer[..n]);
 
-                        let decision = sleep_for_test(msg.as_ref());
+                        let decision = ruck_test(msg.as_ref());
                         if let Err(e) = stream.write_all(decision.as_bytes()) {
                             println!("Failed to send decision: {}", e);
                             break;

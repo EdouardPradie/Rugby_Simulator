@@ -10,6 +10,9 @@ const WHITE: u32 = 0xFFFFFFFF;
 const BLACK: u32 = 0xFF000000;
 const SCRUM: u32 = 0xFFB195EE;
 const SCRUM_LINE: u32 = 0xFF9267EE;
+const RUCK: u32 = 0xFF00DFFF;
+const RUCK_LINE: u32 = 0xFF20C2BD;
+const OFFSIDE_LINE: u32 = 0xFFE63319;
 
 const FONT_3X5: [[&str; 5]; 10] = [
     [ "111", "101", "101", "101", "111" ], // 0
@@ -100,6 +103,23 @@ impl Display {
                     (drawable.state.size * pixel_per_cell as f32) as usize,
                     SCRUM,
                     SCRUM_LINE
+                );
+            },
+            "ruck" => {
+                self.draw_circle(
+                    (drawable.state.pos.x * pixel_per_cell as f32) as usize,
+                    (drawable.state.pos.y * pixel_per_cell as f32) as usize,
+                    (drawable.state.size * pixel_per_cell as f32) as usize,
+                    RUCK,
+                    RUCK_LINE
+                );
+                self.draw_line(
+                    ((drawable.state.pos.x + drawable.state.size) * pixel_per_cell as f32) as usize,
+                    OFFSIDE_LINE
+                );
+                self.draw_line(
+                    ((drawable.state.pos.x - drawable.state.size) * pixel_per_cell as f32) as usize,
+                    OFFSIDE_LINE
                 );
             },
             _ => {}
@@ -198,8 +218,11 @@ impl Display {
     fn draw_square(&mut self, x: usize, y: usize, size: usize, color: u32) {
         for dy in 0..size {
             for dx in 0..size {
-                let px: usize = x + dx - (size / 2);
-                let py: usize = y + dy - (size / 2);
+                if x + dx < size / 2 || y + dy < size / 2 {
+                    continue;
+                }
+                let px: usize = x + dx - size / 2;
+                let py: usize = y + dy - size / 2;
                 if py * self.size + px < self.size * self.height {
                     self.buffer[py * self.size + px] = color;
                 }
@@ -249,6 +272,47 @@ impl Display {
                         };
                         self.buffer[idx] = color;
                     }
+                }
+            }
+        }
+    }
+
+    fn draw_circle(
+        &mut self,
+        x: usize,
+        y: usize,
+        radius: usize,
+        fill_color: u32,
+        border_color: u32
+    ) {
+        let cx = x as isize;
+        let cy = y as isize;
+        let r = radius as isize;
+
+        for dy in -r..=r {
+            for dx in -r..=r {
+                let px = cx + dx;
+                let py = cy + dy;
+
+                if px < 0 || py < 0 ||
+                   (px as usize) >= self.size ||
+                   (py as usize) >= self.height {
+                    continue;
+                }
+
+                let dist_sq = (dx * dx + dy * dy) as f32;
+                let r_sq = (r * r) as f32;
+
+                if dist_sq <= r_sq {
+                    let idx = (py as usize) * self.size + (px as usize);
+                    let dist = dist_sq.sqrt();
+                    let color = if (r as f32 - dist).abs() < 1.0 {
+                        border_color
+                    } else {
+                        fill_color
+                    };
+
+                    self.buffer[idx] = color;
                 }
             }
         }
