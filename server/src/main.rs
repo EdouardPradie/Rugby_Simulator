@@ -4,7 +4,6 @@ use std::collections::HashMap;
 use std::thread;
 use std::net::{SocketAddr, TcpListener};
 use std::sync::mpsc::{channel, Sender, Receiver};
-use std::time::Duration;
 
 mod gui;
 use gui::display::Display;
@@ -52,6 +51,7 @@ fn main() {
         match listener.accept() {
             Ok((stream, _addr)) => {
                 println!("New client connected {}.", stream.peer_addr().unwrap());
+
                 // Initialize a new client state
                 let client_id = stream.peer_addr().unwrap();
 
@@ -77,6 +77,7 @@ fn main() {
                 println!("Connection failed: {}", e);
             }
         }
+
         // Catch clients event (from handle_client via tx)
         while let Ok(event) = rx.try_recv() {
             match event {
@@ -101,14 +102,13 @@ fn main() {
                 }
             }
         }
+
         // Game logic
         for (client_id, drawable) in &mut drawables {
-            // state.test();
             if display_enable && displays.iter().any(|(id, _)| *id == *client_id) {
                 if let Some(display) = displays.iter_mut().find(|(id, _)| **id == *client_id) {
                     if display.1.is_open() {
                         display.1.render(drawable, pixel_per_cell);
-                        thread::sleep(Duration::from_millis(1000 / 30)); // 30 FPS
                     }
                 }
             }
