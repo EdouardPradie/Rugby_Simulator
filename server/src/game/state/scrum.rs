@@ -107,14 +107,4 @@ impl GameState {
         self.update_ball_position_scrum(scrum_h_pound, scrum_a_pound);
         self.check_ball_out_of_scrum();
     }
-
-    fn check_ball_out_of_scrum(&mut self) {
-        let distance = ((self.ball.x - self.state.x).powi(2) + (self.ball.y - self.state.y).powi(2)).sqrt();
-        if !self.ball.is_carried && distance >= SCRUM_SIZE {
-            self.state.name = "play".to_string();
-            self.state.x = self.ball.x;
-            self.state.y = self.ball.y;
-            print!("Ball out of scrum, resuming play\n");
-        }
-    }
 }

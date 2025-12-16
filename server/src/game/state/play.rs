@@ -3,6 +3,7 @@ use crate::game::game_state::GameState;
 impl GameState {
 
     pub fn play(&mut self, input: String) {
+        let mut update = false;
         self.time += 25;
         if self.state.name == "start" {
             self.state.name = "play".to_string();
@@ -11,6 +12,9 @@ impl GameState {
         let actions: Vec<&str> = input.split('\n').collect();
         for action in actions {
             if let Some((player, action)) = action.split_once(':') {
+                if update {
+                    return;
+                }
                 let tmp = action.chars().nth(0).unwrap_or('\0');
                 match tmp {
                     'R' => {
@@ -47,7 +51,7 @@ impl GameState {
                         let tmp: Vec<&str> = action[1..].split('/').collect();
                         let direction = tmp[0].parse().unwrap_or(0.0);
                         println!("Player {} {} Pass in way {}", team, number, direction);
-                        self.pass(team, number, direction);
+                        update = self.pass(team, number, direction);
                     },
                     'S' => continue,
                     _ => {

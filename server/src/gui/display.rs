@@ -1,5 +1,5 @@
 use minifb::{Window, WindowOptions};
-use crate::gui::drawable::Drawable;
+use crate::{game::constants::SCRUM_SIZE, gui::drawable::Drawable};
 
 const GROUND_COLOR: u32 = 0xFF66D575;
 const GROUND_LINE_COLOR: u32 = 0xFFCDF4D3;
@@ -103,6 +103,18 @@ impl Display {
                     (drawable.state.size * pixel_per_cell as f32) as usize,
                     SCRUM,
                     SCRUM_LINE
+                );
+                self.draw_line(
+                    ((drawable.state.pos.x) * pixel_per_cell as f32) as usize,
+                    OFFSIDE_LINE
+                );
+                self.draw_line(
+                    ((drawable.state.pos.x - SCRUM_SIZE) * pixel_per_cell as f32) as usize,
+                    OFFSIDE_LINE
+                );
+                self.draw_line(
+                    ((drawable.state.pos.x + SCRUM_SIZE) * pixel_per_cell as f32) as usize,
+                    OFFSIDE_LINE
                 );
             },
             "ruck" => {
