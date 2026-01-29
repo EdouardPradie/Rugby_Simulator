@@ -6,7 +6,7 @@ impl GameState {
         if !self.ball.is_carried {
             result.push_str(&format!("B: {} {}\n", self.ball.x, self.ball.y));
         }
-        for player in self.home_players.iter() {
+        for player in self.home_team.players.iter() {
             result.push_str(&format!("H{}: {} {}", player.number, player.x, player.y));
             if player.ball_pos {
                 result.push_str(&format!("/B: {} {}\n", self.ball.x, self.ball.y));
@@ -14,7 +14,7 @@ impl GameState {
                 result.push('\n');
             }
         }
-        for player in self.away_players.iter() {
+        for player in self.away_team.players.iter() {
             result.push_str(&format!("A{}: {} {}", player.number, player.x, player.y));
             if player.ball_pos {
                 result.push_str(&format!("/B: {} {}\n", self.ball.x, self.ball.y));

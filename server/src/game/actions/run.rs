@@ -4,9 +4,9 @@ use crate::game::constants::*;
 impl GameState {
     pub fn run(&mut self, team: char, number: i32, direction: f32, is_running: bool) {
         let players = if team == 'H' {
-            &mut self.home_players
+            &mut self.home_team.players
         } else {
-            &mut self.away_players
+            &mut self.away_team.players
         };
 
         if let Some(p) = players.iter_mut().find(|p| p.number == number as usize) {
@@ -28,9 +28,9 @@ impl GameState {
 
     pub fn run_ruck(&mut self, team: char, number: i32, direction: f32, is_running: bool) {
         let players = if team == 'H' {
-            &mut self.home_players
+            &mut self.home_team.players
         } else {
-            &mut self.away_players
+            &mut self.away_team.players
         };
 
         if let Some(p) = players.iter_mut().find(|p| p.number == number as usize) {

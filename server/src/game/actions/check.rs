@@ -17,19 +17,22 @@ impl GameState {
     }
 
     //RUCK
-    pub fn check_tackler(&mut self) {
+    pub fn check_tackler(&mut self) -> bool {
         for (team, player) in
-        self.home_players.iter_mut().map(|p| ('H', p))
-        .chain(self.away_players.iter_mut().map(|p| ('A', p))) {
+        self.home_team.players.iter_mut().map(|p| ('H', p))
+        .chain(self.away_team.players.iter_mut().map(|p| ('A', p))) {
             if player.is_tackler {
                 let distance = ((player.x - self.state.x).powi(2) + (player.y - self.state.y).powi(2)).sqrt();
                 if distance < 1.0 {
-                    print!("Tackler penalty: ball for {}\n", if team == 'H' { 'A' } else { 'H' });
+                    let team_fouled = if team == 'H' { 'A' } else { 'H' };
+                    print!("Tackler penalty: ball for {}\n", team_fouled);
+                    return true;
                 } else {
                     player.is_tackler = false;
                 }
             }
         }
+        false
     }
 
     pub fn check_scrap(&mut self) {
@@ -39,8 +42,8 @@ impl GameState {
         let mut contest_dist: f32 = f32::MAX;
 
         for (team, player) in
-        self.home_players.iter_mut().map(|p| ('H', p))
-        .chain(self.away_players.iter_mut().map(|p| ('A', p))) {
+        self.home_team.players.iter_mut().map(|p| ('H', p))
+        .chain(self.away_team.players.iter_mut().map(|p| ('A', p))) {
             let distance = ((player.x - self.state.x).powi(2) + (player.y - self.state.y).powi(2)).sqrt();
             if distance < self.state.size && !player.is_tackle {
                 if team == 'H' {
@@ -83,6 +86,14 @@ impl GameState {
                 self.state.x = self.ball.x;
                 self.state.y = self.ball.y;
             }
+        }
+    }
+
+
+    pub fn check_ball_position(&mut self) {
+        if self.ball.y < 1.0 || self.ball.y > self.field.height as f32 + 1.0 {
+            let side = if self.ball.y < 1.0 { "T" } else { "B" };
+            let x = self.ball.x.clamp(self.field.try_size as f32 + 6.0, (self.field.try_size + self.field.width) as f32 - 5.0);
         }
     }
 }

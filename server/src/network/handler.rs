@@ -1,6 +1,6 @@
 use std::io::{Read, Write};
 use std::sync::mpsc::Sender;
-use std::net::TcpStream;
+use std::net::{SocketAddr, TcpStream};
 use std::io::ErrorKind;
 
 use crate::game::game_state::GameState;
@@ -68,7 +68,7 @@ pub fn handle_client(mut stream: TcpStream, display_enable: bool, run_time: bool
                     }
 
                     status = 1; // Change state to indicate initialization is done
-                    let mut response = format!("{}\n", client.state.name);
+                    let mut response = format!("{} {}\n", client.state.name, client.state.team);
                     response.push_str(&format!("time:{}\n", &client.time.to_string()));
                     response.push_str(client.positions().as_str());
 
@@ -80,90 +80,38 @@ pub fn handle_client(mut stream: TcpStream, display_enable: bool, run_time: bool
                     continue;
                 }
 
-                // PLAY
+                // ACTION HANDLING
 
-                if buffer.starts_with(b"play") && status == 1 {
-                    let input: String = String::from_utf8_lossy(&buffer[..n]).to_string();
-                    client.play(input);
-                    let mut response = format!("{}\n", client.state.name);
-                    response.push_str(&format!("time:{}\n", &client.time.to_string()));
-                    response.push_str(client.positions().as_str());
+                let handlers: &[(&[u8], fn(&mut GameState, String))] = &[
+                    (b"play", GameState::play),
+                    (b"free-kick", GameState::play),
+                    (b"penalty-kick", GameState::play),
+                    (b"scrum", GameState::scrum),
+                    (b"ruck", GameState::ruck),
+                    (b"set-penalty", GameState::penalty),
+                ];
 
-                    if display_enable {
-                        if run_time {
-                            std::thread::sleep(std::time::Duration::from_millis(200));
+                if status == 1 {
+                    for (cmd, handler) in handlers {
+                        if buffer.starts_with(cmd) {
+                            if handle_action(
+                                &buffer, n, addr, &mut client, &mut stream, &tx,
+                                display_enable, run_time,
+                                |c, i| handler(c, i),
+                            ) {
+                                break;
+                            }
+                            buffer.fill(0);
+                            continue;
                         }
-                        let _ = tx.send(ClientEvent::DisplayUpdate {
-                            addr,
-                            drawable: client.get_drawable(),
-                        });
                     }
-
-                    if let Err(e) = stream.write_all(response.as_bytes()) {
-                        println!("Failed to send update response: {}", e);
-                        break;
-                    }
-                    buffer.fill(0);
-                    continue;
-                }
-
-                // SCRUM
-
-                if buffer.starts_with(b"scrum") && status == 1 {
-                    let input: String = String::from_utf8_lossy(&buffer[..n]).to_string();
-                    client.scrum(input);
-                    let mut response = format!("{}\n", client.state.name);
-                    response.push_str(&format!("time:{}\n", &client.time.to_string()));
-                    response.push_str(client.positions().as_str());
-
-                    if display_enable {
-                        if run_time {
-                            std::thread::sleep(std::time::Duration::from_millis(200));
-                        }
-                        let _ = tx.send(ClientEvent::DisplayUpdate {
-                            addr,
-                            drawable: client.get_drawable(),
-                        });
-                    }
-
-                    if let Err(e) = stream.write_all(response.as_bytes()) {
-                        println!("Failed to send update response: {}", e);
-                        break;
-                    }
-                    buffer.fill(0);
-                    continue;
-                }
-
-                // RUCK
-
-                if buffer.starts_with(b"ruck") && status == 1 {
-                    let input: String = String::from_utf8_lossy(&buffer[..n]).to_string();
-                    client.ruck(input);
-                    let mut response = format!("{}\n", client.state.name);
-                    response.push_str(&format!("time:{}\n", &client.time.to_string()));
-                    response.push_str(client.positions().as_str());
-
-                    if display_enable {
-                        if run_time {
-                            std::thread::sleep(std::time::Duration::from_millis(200));
-                        }
-                        let _ = tx.send(ClientEvent::DisplayUpdate {
-                            addr,
-                            drawable: client.get_drawable(),
-                        });
-                    }
-
-                    if let Err(e) = stream.write_all(response.as_bytes()) {
-                        println!("Failed to send update response: {}", e);
-                        break;
-                    }
-                    buffer.fill(0);
-                    continue;
                 }
 
                 // Handle unrecognized input
-                println!("Unrecognized input from {}: {:?}", addr, String::from_utf8_lossy(&buffer[..n]).to_string());
-                buffer.fill(0); // Clear the buffer to avoid processing leftover data
+                if buffer[..n].iter().any(|&byte| byte != 0) {
+                    println!("Unrecognized input from {}: {}", addr, String::from_utf8_lossy(&buffer[..n]).to_string());
+                    buffer.fill(0);
+                }
 
                 // Echo back the received data
                 if let Err(e) = stream.write_all(&buffer[..n]) {
@@ -182,4 +130,39 @@ pub fn handle_client(mut stream: TcpStream, display_enable: bool, run_time: bool
             }
         }
     }
+}
+
+fn handle_action<F>(
+    buffer: &[u8],
+    n: usize,
+    addr: SocketAddr,
+    client: &mut GameState,
+    stream: &mut TcpStream,
+    tx: &Sender<ClientEvent>,
+    display_enable: bool,
+    run_time: bool,
+    action: F,
+) -> bool
+where
+    F: FnOnce(&mut GameState, String),
+{
+    let input = String::from_utf8_lossy(&buffer[..n]).to_string();
+
+    action(client, input);
+
+    let mut response = format!("{} {}\n", client.state.name, client.state.team);
+    response.push_str(&format!("time:{}\n", client.time));
+    response.push_str(client.positions().as_str());
+
+    if display_enable {
+        if run_time {
+            std::thread::sleep(std::time::Duration::from_millis(200));
+        }
+        let _ = tx.send(ClientEvent::DisplayUpdate {
+            addr,
+            drawable: client.get_drawable(),
+        });
+    }
+
+    stream.write_all(response.as_bytes()).is_err()
 }

@@ -17,6 +17,8 @@ pub struct Drawable {
     pub state: DrawState,
     pub home_players: Vec<DrawPlayer>,
     pub away_players: Vec<DrawPlayer>,
+    pub home_score: usize,
+    pub away_score: usize,
     pub time: u64,
 }
 
@@ -31,6 +33,8 @@ impl Drawable {
             },
             home_players: Vec::new(),
             away_players: Vec::new(),
+            home_score: 0,
+            away_score: 0,
             time: 0,
         }
     }

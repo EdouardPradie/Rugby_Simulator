@@ -24,14 +24,26 @@ impl GameState {
             weather: 0,
         };
         let time = 0;
-        let home_players = Vec::new();
-        let home_bench = Vec::new();
-        let away_players = Vec::new();
-        let away_bench = Vec::new();
+        let home_team = Team {
+            players: Vec::new(),
+            bench: Vec::new(),
+            score: 0,
+            try_scored: 0,
+            transformation: 0,
+            penalty: 0,
+        };
+        let away_team = Team {
+            players: Vec::new(),
+            bench: Vec::new(),
+            score: 0,
+            try_scored: 0,
+            transformation: 0,
+            penalty: 0,
+        };
         let ball: Ball = Ball { x: 50.0, y: 35.0, z: 1.0, is_carried: false };
         let ball_throw = BallThrow { vx: 0.0, vy: 0.0, vz: 0.0, active: false };
 
-        Self { state, field, time, home_players, home_bench, away_players, away_bench, ball, ball_throw }
+        Self { state, field, time, home_team, away_team, ball, ball_throw }
     }
 
     //INIT
@@ -130,12 +142,12 @@ impl GameState {
                 .and_then(|v| v.parse().ok())
                 .unwrap_or(10.0);
             if i >= 15 {
-                self.home_bench.push(Player { x, y, number: (i + 1), ball_pos: false, size, pound, speed, foot, p_foot, p_tackle, is_tackle: false, is_tackler: false });
+                self.home_team.bench.push(Player { x, y, number: (i + 1), ball_pos: false, size, pound, speed, foot, p_foot, p_tackle, is_tackle: false, is_tackler: false });
             } else {
-                self.home_players.push(Player { x, y, number: (i + 1), ball_pos: false, size, pound, speed, foot, p_foot, p_tackle, is_tackle:false, is_tackler: false });
+                self.home_team.players.push(Player { x, y, number: (i + 1), ball_pos: false, size, pound, speed, foot, p_foot, p_tackle, is_tackle:false, is_tackler: false });
                 if i == 9 {
                     // Set the half opener player as the one with the ball
-                    self.home_players[i].ball_pos = true;
+                    self.home_team.players[i].ball_pos = true;
                     self.ball.is_carried = true;
                 }
             }
@@ -171,15 +183,15 @@ impl GameState {
                 .and_then(|v| v.parse().ok())
                 .unwrap_or(10.0);
             if i >= 15 {
-                self.away_bench.push(Player { x, y, number: (i + 1), ball_pos: false, size, pound, speed, foot, p_foot, p_tackle, is_tackle:false, is_tackler: false });
+                self.home_team.bench.push(Player { x, y, number: (i + 1), ball_pos: false, size, pound, speed, foot, p_foot, p_tackle, is_tackle:false, is_tackler: false });
             } else {
-                self.away_players.push(Player { x, y, number: (i + 1), ball_pos: false, size, pound, speed, foot, p_foot, p_tackle, is_tackle:false, is_tackler: false });
+                self.away_team.players.push(Player { x, y, number: (i + 1), ball_pos: false, size, pound, speed, foot, p_foot, p_tackle, is_tackle:false, is_tackler: false });
             }
         }
 
         // Initialize ball
-        self.ball.x = self.home_players[9].x + 1.0;
-        self.ball.y = self.home_players[9].y;
+        self.ball.x = self.home_team.players[9].x + 1.0;
+        self.ball.y = self.home_team.players[9].y;
 
         //Initialize state
         self.init_state(state);
@@ -214,11 +226,11 @@ impl GameState {
                     let team_tackle = tackle.chars().next().unwrap();
                     let number_tackle = tackle[1..].parse().unwrap_or(0);
                     if team_tackle == 'H' {
-                        if let Some(p) = self.home_players.iter_mut().find(|p| p.number == number_tackle as usize) {
+                        if let Some(p) = self.home_team.players.iter_mut().find(|p| p.number == number_tackle as usize) {
                             p.is_tackle = true;
                         }
                     } else if team_tackle == 'A' {
-                        if let Some(p) = self.away_players.iter_mut().find(|p| p.number == number_tackle as usize) {
+                        if let Some(p) = self.away_team.players.iter_mut().find(|p| p.number == number_tackle as usize) {
                             p.is_tackle = true;
                         }
                     }
@@ -229,11 +241,11 @@ impl GameState {
                     let team_tackler = tackler.chars().next().unwrap();
                     let number_tackler = tackler[1..].parse().unwrap_or(0);
                     if team_tackler == 'H' {
-                        if let Some(p) = self.home_players.iter_mut().find(|p| p.number == number_tackler as usize) {
+                        if let Some(p) = self.home_team.players.iter_mut().find(|p| p.number == number_tackler as usize) {
                             p.is_tackler = true;
                         }
                     } else if team_tackler == 'A' {
-                        if let Some(p) = self.away_players.iter_mut().find(|p| p.number == number_tackler as usize) {
+                        if let Some(p) = self.away_team.players.iter_mut().find(|p| p.number == number_tackler as usize) {
                             p.is_tackler = true;
                         }
                     }
@@ -286,7 +298,7 @@ impl GameState {
                 let team: char = player.chars().next().unwrap();
                 let number: i32 = player[1..].parse().unwrap_or(0);
                 if team == 'H' {
-                    if let Some(p) = self.home_players.iter_mut().find(|p| p.number == number as usize) {
+                    if let Some(p) = self.home_team.players.iter_mut().find(|p| p.number == number as usize) {
                         p.x = x;
                         p.y = y;
                         if ball != "" {
@@ -294,7 +306,7 @@ impl GameState {
                         }
                     }
                 } else if team == 'A' {
-                    if let Some(p) = self.away_players.iter_mut().find(|p| p.number == number as usize) {
+                    if let Some(p) = self.away_team.players.iter_mut().find(|p| p.number == number as usize) {
                         p.x = x;
                         p.y = y;
                         if ball != "" {

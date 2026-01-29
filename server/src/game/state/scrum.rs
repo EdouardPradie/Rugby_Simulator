@@ -23,9 +23,9 @@ impl GameState {
                         let direction = action[1..].parse().unwrap_or(0.0);
                         // println!("Player {} {} runs {}", team, number, direction);
                         let players = if team == 'H' {
-                            &mut self.home_players
+                            &mut self.home_team.players
                         } else {
-                            &mut self.away_players
+                            &mut self.away_team.players
                         };
                         let player_index = players.iter()
                         .position(|p| p.number == number as usize)
@@ -42,9 +42,9 @@ impl GameState {
                         let direction = action[1..].parse().unwrap_or(0.0);
                         // println!("Player {} {} walk {}", team, number, direction);
                         let players = if team == 'H' {
-                            &mut self.home_players
+                            &mut self.home_team.players
                         } else {
-                            &mut self.away_players
+                            &mut self.away_team.players
                         };
                         let player_index = players.iter()
                         .position(|p| p.number == number as usize)
@@ -59,9 +59,9 @@ impl GameState {
                         let team = player.chars().next().unwrap();
                         let number = player[1..].parse().unwrap_or(0);
                         let players = if team == 'H' {
-                            &mut self.home_players
+                            &mut self.home_team.players
                         } else {
-                            &mut self.away_players
+                            &mut self.away_team.players
                         };
                         let player_index = players.iter()
                         .position(|p| p.number == number as usize)
@@ -81,9 +81,9 @@ impl GameState {
                         let number = player[1..].parse().unwrap_or(0);
                         // println!("Player {} {} stop or scrum", team, number);
                         let players = if team == 'H' {
-                            &mut self.home_players
+                            &mut self.home_team.players
                         } else {
-                            &mut self.away_players
+                            &mut self.away_team.players
                         };
                         let player_index = players.iter()
                         .position(|p| p.number == number as usize)

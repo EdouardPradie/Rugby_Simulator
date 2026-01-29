@@ -7,9 +7,9 @@ impl GameState {
     pub fn try_catch_ball_in_scrum(&mut self, team: char, number: i32) {
 
         let players = if team == 'H' {
-            &mut self.home_players
+            &mut self.home_team.players
         } else {
-            &mut self.away_players
+            &mut self.away_team.players
         };
 
         if let Some(p) = players.iter_mut().find(|p| p.number == number as usize) {
@@ -44,12 +44,12 @@ impl GameState {
 
     //RUCK
 
-    pub fn try_catch_ball_in_ruck(&mut self, team: char, number: i32) {
+    pub fn try_catch_ball_in_ruck(&mut self, team: char, number: i32) -> bool {
         let is_offside = self.check_offside_ruck();
         let players = if team == 'H' {
-            &mut self.home_players
+            &mut self.home_team.players
         } else {
-            &mut self.away_players
+            &mut self.away_team.players
         };
 
         if let Some(p) = players.iter_mut().find(|p| p.number == number as usize) {
@@ -59,7 +59,7 @@ impl GameState {
             if distance_ball < 1.0 && distance_ruck >= 1.0 {
                 if is_offside {
                     print!("Offside penalty for {}\n", self.state.team);
-                    return;
+                    return true;
                 }
                 p.ball_pos = true;
                 self.ball.is_carried = true;
@@ -85,13 +85,14 @@ impl GameState {
                 self.ball.z = 1.0;
             }
         }
+        false
     }
 
     fn check_offside_ruck(&self) -> bool {
         let players = if self.state.team == 'H' {
-            &self.away_players
+            &self.away_team.players
         } else {
-            &self.home_players
+            &self.home_team.players
         };
         let diff = if (self.state.team == 'H' && self.field.home_direction_try == 'N') ||
                             (self.state.team == 'A' && self.field.home_direction_try == 'S') {

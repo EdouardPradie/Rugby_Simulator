@@ -9,7 +9,10 @@ mod init;
 use init::init_game::initialize_game;
 
 mod ai;
+use ai::take_decision::start_test;
+use ai::take_decision::ruck_test;
 use ai::take_decision::scrum_test;
+use ai::take_decision::penalty_test;
 
 fn main() {
     // Load environment variables from .env file
@@ -46,7 +49,31 @@ fn main() {
                     Ok(n) => {
                         let msg = String::from_utf8_lossy(&buffer[..n]);
 
-                        let decision = scrum_test(msg.as_ref());
+                        if msg.starts_with("set-penalty") {
+                            let decision = penalty_test(msg.as_ref());
+                            if let Err(e) = stream.write_all(decision.as_bytes()) {
+                                println!("Failed to send decision: {}", e);
+                                break;
+                            }
+                            continue;
+                        }
+                        if msg.starts_with("ruck") {
+                            let decision = ruck_test(msg.as_ref());
+                            if let Err(e) = stream.write_all(decision.as_bytes()) {
+                                println!("Failed to send decision: {}", e);
+                                break;
+                            }
+                            continue;
+                        }
+                        if msg.starts_with("scrum") {
+                            let decision = scrum_test(msg.as_ref());
+                            if let Err(e) = stream.write_all(decision.as_bytes()) {
+                                println!("Failed to send decision: {}", e);
+                                break;
+                            }
+                            continue;
+                        }
+                        let decision = start_test(msg.as_ref());
                         if let Err(e) = stream.write_all(decision.as_bytes()) {
                             println!("Failed to send decision: {}", e);
                             break;

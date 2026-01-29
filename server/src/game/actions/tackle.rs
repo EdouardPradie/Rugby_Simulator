@@ -7,9 +7,9 @@ impl GameState {
             return;
         }
         let (players, opponents) = if team == 'H' {
-            (&mut self.home_players, &mut self.away_players)
+            (&mut self.home_team.players, &mut self.away_team.players)
         } else {
-            (&mut self.away_players, &mut self.home_players)
+            (&mut self.away_team.players, &mut self.home_team.players)
         };
 
         if let Some(p) = players.iter_mut().find(|p| p.ball_pos) {

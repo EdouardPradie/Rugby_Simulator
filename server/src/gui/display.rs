@@ -4,8 +4,13 @@ use crate::{game::constants::SCRUM_SIZE, gui::drawable::Drawable};
 const GROUND_COLOR: u32 = 0xFF66D575;
 const GROUND_LINE_COLOR: u32 = 0xFFCDF4D3;
 const GROUND_OUT_COLOR: u32 = 0xFFD9D9D9;
-const TEAM1: u32 = 0xFFA12222;
-const TEAM2: u32 = 0xFF000000;
+const PENALTY_COLOR: u32 = 0xFFC6FAF6;
+const PENALTY_BUDDIES_COLOR: u32 = 0xFF5AD8CC;
+const GOAL_DISTANCE: f32 = 5.6;
+const COLOR_TEAM1: u32 = 0xFFA12222;
+const COLOR_TEAM2: u32 = 0xFF000000;
+const COLOR_TEAM1_NUM: u32 = 0xFFFFFFFF;
+const COLOR_TEAM2_NUM: u32 = 0xFFFFFFFF;
 const WHITE: u32 = 0xFFFFFFFF;
 const BLACK: u32 = 0xFF000000;
 const SCRUM: u32 = 0xFFB195EE;
@@ -116,6 +121,14 @@ impl Display {
                     ((drawable.state.pos.x + SCRUM_SIZE) * pixel_per_cell as f32) as usize,
                     OFFSIDE_LINE
                 );
+                self.draw_line(
+                    ((drawable.state.pos.x - SCRUM_SIZE - 5.0) * pixel_per_cell as f32) as usize,
+                    OFFSIDE_LINE
+                );
+                self.draw_line(
+                    ((drawable.state.pos.x + SCRUM_SIZE + 5.0) * pixel_per_cell as f32) as usize,
+                    OFFSIDE_LINE
+                );
             },
             "ruck" => {
                 self.draw_circle(
@@ -156,7 +169,7 @@ impl Display {
                 (player.pos.x * pixel_per_cell as f32) as usize,
                 (player.pos.y * pixel_per_cell as f32) as usize,
                 pixel_per_cell - 2,
-                TEAM1
+                COLOR_TEAM1
             );
             if player.number > 9 {
                 self.draw_digit(
@@ -164,14 +177,14 @@ impl Display {
                     (player.pos.y * pixel_per_cell as f32) as usize - (pixel_per_cell - 2) / 3,
                     (pixel_per_cell - 2) / 5,
                     (player.number / 10) as u8,
-                    WHITE
+                    COLOR_TEAM1_NUM
                 );
                 self.draw_digit(
                     (player.pos.x * pixel_per_cell as f32) as usize + 1,
                     (player.pos.y * pixel_per_cell as f32) as usize - (pixel_per_cell - 2) / 3,
                     (pixel_per_cell - 2) / 5,
                     (player.number % 10) as u8,
-                    WHITE
+                    COLOR_TEAM1_NUM
                 );
             } else {
                 self.draw_digit(
@@ -179,7 +192,7 @@ impl Display {
                     (player.pos.y * pixel_per_cell as f32) as usize - (pixel_per_cell - 2) / 3,
                     (pixel_per_cell - 2) / 5,
                     player.number as u8,
-                    WHITE
+                    COLOR_TEAM1_NUM
                 );
             }
         }
@@ -190,7 +203,7 @@ impl Display {
                 (player.pos.x * pixel_per_cell as f32) as usize,
                 (player.pos.y * pixel_per_cell as f32) as usize,
                 pixel_per_cell - 2,
-                TEAM2
+                COLOR_TEAM2
             );
             if player.number > 9 {
                 self.draw_digit(
@@ -198,14 +211,14 @@ impl Display {
                     (player.pos.y * pixel_per_cell as f32) as usize - (pixel_per_cell - 2) / 3,
                     (pixel_per_cell - 2) / 5,
                     (player.number / 10) as u8,
-                    WHITE
+                    COLOR_TEAM2_NUM
                 );
                 self.draw_digit(
                     (player.pos.x * pixel_per_cell as f32) as usize + 1,
                     (player.pos.y * pixel_per_cell as f32) as usize - (pixel_per_cell - 2) / 3,
                     (pixel_per_cell - 2) / 5,
                     (player.number % 10) as u8,
-                    WHITE
+                    COLOR_TEAM2_NUM
                 );
             } else {
                 self.draw_digit(
@@ -213,7 +226,7 @@ impl Display {
                     (player.pos.y * pixel_per_cell as f32) as usize - (pixel_per_cell - 2) / 3,
                     (pixel_per_cell - 2) / 5,
                     player.number as u8,
-                    WHITE
+                    COLOR_TEAM2_NUM
                 );
             }
         }
@@ -221,113 +234,13 @@ impl Display {
         // Draw time
         self.draw_time(drawable.time, pixel_per_cell);
 
+        // Draw score
+        self.draw_score(drawable.home_score, drawable.away_score, pixel_per_cell);
+
         // Update the window
         self.window
             .update_with_buffer(&self.buffer, self.size, self.height)
             .unwrap();
-    }
-
-    fn draw_square(&mut self, x: usize, y: usize, size: usize, color: u32) {
-        for dy in 0..size {
-            for dx in 0..size {
-                if x + dx < size / 2 || y + dy < size / 2 {
-                    continue;
-                }
-                let px: usize = x + dx - size / 2;
-                let py: usize = y + dy - size / 2;
-                if py * self.size + px < self.size * self.height {
-                    self.buffer[py * self.size + px] = color;
-                }
-            }
-        }
-    }
-
-    fn draw_line(&mut self, x: usize, color: u32) {
-        for i in 0..self.height {
-            if  i * self.size + x >= self.size * self.height {
-                continue;
-            }
-            self.buffer[i * self.size + x] = color;
-        }
-    }
-
-    fn draw_diamond(
-        &mut self,
-        x: usize,
-        y: usize,
-        radius: usize,
-        fill_color: u32,
-        border_color: u32
-    ) {
-        let cx = x as isize;
-        let cy = y as isize;
-        let r = radius as isize;
-
-        for dy in -r..=r {
-            for dx in -r..=r {
-                let manhattan = dx.abs() + dy.abs();
-
-                if manhattan <= r {
-                    let px = cx + dx;
-                    let py = cy + dy;
-
-                    if px >= 0 && py >= 0 &&
-                       (px as usize) < self.size &&
-                       (py as usize) < self.height
-                    {
-                        let idx = (py as usize) * self.size + (px as usize);
-
-                        let color = if manhattan == r {
-                            border_color
-                        } else {
-                            fill_color
-                        };
-                        self.buffer[idx] = color;
-                    }
-                }
-            }
-        }
-    }
-
-    fn draw_circle(
-        &mut self,
-        x: usize,
-        y: usize,
-        radius: usize,
-        fill_color: u32,
-        border_color: u32
-    ) {
-        let cx = x as isize;
-        let cy = y as isize;
-        let r = radius as isize;
-
-        for dy in -r..=r {
-            for dx in -r..=r {
-                let px = cx + dx;
-                let py = cy + dy;
-
-                if px < 0 || py < 0 ||
-                   (px as usize) >= self.size ||
-                   (py as usize) >= self.height {
-                    continue;
-                }
-
-                let dist_sq = (dx * dx + dy * dy) as f32;
-                let r_sq = (r * r) as f32;
-
-                if dist_sq <= r_sq {
-                    let idx = (py as usize) * self.size + (px as usize);
-                    let dist = dist_sq.sqrt();
-                    let color = if (r as f32 - dist).abs() < 1.0 {
-                        border_color
-                    } else {
-                        fill_color
-                    };
-
-                    self.buffer[idx] = color;
-                }
-            }
-        }
     }
 
     fn draw_digit(
@@ -458,6 +371,60 @@ impl Display {
                 self.buffer[j * self.size + (self.size - self.try_size - (40 * pixel_per_cell) - 2)] = GROUND_LINE_COLOR;
             }
         }
+
+        // Draw goal spots
+        self.draw_square(
+            self.try_size + 1,
+            (self.height as f32 / 2.0 - (GOAL_DISTANCE / 2.0) * pixel_per_cell as f32) as usize,
+            pixel_per_cell,
+            PENALTY_COLOR
+        );
+        self.draw_circle(
+            self.try_size + 1,
+            (self.height as f32 / 2.0 - (GOAL_DISTANCE / 2.0) * pixel_per_cell as f32) as usize,
+            pixel_per_cell / 3,
+            PENALTY_COLOR,
+            PENALTY_BUDDIES_COLOR
+        );
+        self.draw_square(
+            self.try_size + 1,
+            (self.height as f32 / 2.0 + (GOAL_DISTANCE / 2.0) * pixel_per_cell as f32) as usize,
+            pixel_per_cell,
+            PENALTY_COLOR
+        );
+        self.draw_circle(
+            self.try_size + 1,
+            (self.height as f32 / 2.0 + (GOAL_DISTANCE / 2.0) * pixel_per_cell as f32) as usize,
+            pixel_per_cell / 3,
+            PENALTY_COLOR,
+            PENALTY_BUDDIES_COLOR
+        );
+        self.draw_square(
+            self.size - self.try_size - 2,
+            (self.height as f32 / 2.0 - (GOAL_DISTANCE / 2.0) * pixel_per_cell as f32) as usize,
+            pixel_per_cell,
+            PENALTY_COLOR
+        );
+        self.draw_circle(
+            self.size - self.try_size - 2,
+            (self.height as f32 / 2.0 - (GOAL_DISTANCE / 2.0) * pixel_per_cell as f32) as usize,
+            pixel_per_cell / 3,
+            PENALTY_COLOR,
+            PENALTY_BUDDIES_COLOR
+        );
+        self.draw_square(
+            self.size - self.try_size - 2,
+            (self.height as f32 / 2.0 + (GOAL_DISTANCE / 2.0) * pixel_per_cell as f32) as usize,
+            pixel_per_cell,
+            PENALTY_COLOR
+        );
+        self.draw_circle(
+            self.size - self.try_size - 2,
+            (self.height as f32 / 2.0 + (GOAL_DISTANCE / 2.0) * pixel_per_cell as f32) as usize,
+            pixel_per_cell / 3,
+            PENALTY_COLOR,
+            PENALTY_BUDDIES_COLOR
+        );
     }
 
     fn draw_time(&mut self, time: u64, pixel_per_cell: usize) {
@@ -467,15 +434,15 @@ impl Display {
 
         // Draw minutes
         self.draw_digit(
-            15,
-            15,
+            pixel_per_cell + pixel_per_cell / 2,
+            pixel_per_cell + pixel_per_cell / 2,
             pixel_per_cell / 2,
             (minutes / 10) as u8,
             WHITE
         );
         self.draw_digit(
-            15 + (pixel_per_cell * 2),
-            15,
+            (pixel_per_cell * 3) + pixel_per_cell / 2,
+            pixel_per_cell + pixel_per_cell / 2,
             pixel_per_cell / 2,
             (minutes % 10) as u8,
             WHITE
@@ -484,26 +451,195 @@ impl Display {
         // Draw colon
         for i in 0..(pixel_per_cell / 2) {
             for j in 0..(pixel_per_cell / 2) {
-                self.buffer[(18 + i) * self.size + (15 + pixel_per_cell * 4 + j)] = WHITE;
-                self.buffer[(22 + i + pixel_per_cell) * self.size + (15 + pixel_per_cell * 4 + j)] = WHITE;
+                self.buffer[(18 + i) * self.size + (pixel_per_cell * 5 + pixel_per_cell / 2 + j)] = WHITE;
+                self.buffer[(22 + i + pixel_per_cell) * self.size + (pixel_per_cell * 5 + pixel_per_cell / 2 + j)] = WHITE;
             }
         }
 
         // Draw seconds
         self.draw_digit(
-            15 + (pixel_per_cell * 5),
-            15,
+            pixel_per_cell * 6 + pixel_per_cell / 2,
+            pixel_per_cell + pixel_per_cell / 2,
             pixel_per_cell / 2,
             (seconds / 10) as u8,
             WHITE
         );
         self.draw_digit(
-            15 + (pixel_per_cell * 7),
-            15,
+            pixel_per_cell * 8 + pixel_per_cell / 2,
+            pixel_per_cell + pixel_per_cell / 2,
             pixel_per_cell / 2,
             (seconds % 10) as u8,
             WHITE
         );
+    }
+
+    fn draw_score(&mut self, home_score: usize, away_score: usize, pixel_per_cell: usize) {
+        // Draw home score
+        self.draw_square(
+            pixel_per_cell * 3 + 2,
+            pixel_per_cell * 6 + (pixel_per_cell / 2),
+            pixel_per_cell * 4 + pixel_per_cell / 2,
+            COLOR_TEAM1
+        );
+        if home_score > 9 {
+            self.draw_digit(
+                pixel_per_cell + pixel_per_cell / 2,
+                pixel_per_cell * 5,
+                pixel_per_cell / 2,
+                (home_score / 10) as u8,
+                COLOR_TEAM1_NUM
+            );
+            self.draw_digit(
+                pixel_per_cell * 3 + pixel_per_cell / 2,
+                pixel_per_cell * 5,
+                pixel_per_cell / 2,
+                (home_score % 10) as u8,
+                COLOR_TEAM1_NUM
+            );
+        } else {
+            self.draw_digit(
+                pixel_per_cell * 2 + pixel_per_cell / 2,
+                pixel_per_cell * 5,
+                pixel_per_cell / 2,
+                (away_score / 10) as u8,
+                COLOR_TEAM1_NUM
+            );
+        }
+
+        // Draw away score
+        self.draw_square(
+            pixel_per_cell * 7 + pixel_per_cell / 2 + 3,
+            pixel_per_cell * 6 + (pixel_per_cell / 2),
+            pixel_per_cell * 4 + pixel_per_cell / 2,
+            COLOR_TEAM2
+        );
+        if away_score > 9 {
+            self.draw_digit(
+                pixel_per_cell * 6 + 1,
+                pixel_per_cell * 5,
+                pixel_per_cell / 2,
+                (away_score / 10) as u8,
+                COLOR_TEAM2_NUM
+            );
+            self.draw_digit(
+                pixel_per_cell * 8 + 1,
+                pixel_per_cell * 5,
+                pixel_per_cell / 2,
+                (away_score % 10) as u8,
+                COLOR_TEAM2_NUM
+            );
+        } else {
+            self.draw_digit(
+                pixel_per_cell * 7 + 1,
+                pixel_per_cell * 5,
+                pixel_per_cell / 2,
+                (away_score / 10) as u8,
+                COLOR_TEAM2_NUM
+            );
+        }
+    }
+
+    fn draw_square(&mut self, x: usize, y: usize, size: usize, color: u32) {
+        for dy in 0..size {
+            for dx in 0..size {
+                if x + dx < size / 2 || y + dy < size / 2 {
+                    continue;
+                }
+                let px: usize = x + dx - size / 2;
+                let py: usize = y + dy - size / 2;
+                if py * self.size + px < self.size * self.height {
+                    self.buffer[py * self.size + px] = color;
+                }
+            }
+        }
+    }
+
+    fn draw_line(&mut self, x: usize, color: u32) {
+        for i in 0..self.height {
+            if  i * self.size + x >= self.size * self.height {
+                continue;
+            }
+            self.buffer[i * self.size + x] = color;
+        }
+    }
+
+    fn draw_diamond(
+        &mut self,
+        x: usize,
+        y: usize,
+        radius: usize,
+        fill_color: u32,
+        border_color: u32
+    ) {
+        let cx = x as isize;
+        let cy = y as isize;
+        let r = radius as isize;
+
+        for dy in -r..=r {
+            for dx in -r..=r {
+                let manhattan = dx.abs() + dy.abs();
+
+                if manhattan <= r {
+                    let px = cx + dx;
+                    let py = cy + dy;
+
+                    if px >= 0 && py >= 0 &&
+                       (px as usize) < self.size &&
+                       (py as usize) < self.height
+                    {
+                        let idx = (py as usize) * self.size + (px as usize);
+
+                        let color = if manhattan == r {
+                            border_color
+                        } else {
+                            fill_color
+                        };
+                        self.buffer[idx] = color;
+                    }
+                }
+            }
+        }
+    }
+
+    fn draw_circle(
+        &mut self,
+        x: usize,
+        y: usize,
+        radius: usize,
+        fill_color: u32,
+        border_color: u32
+    ) {
+        let cx = x as isize;
+        let cy = y as isize;
+        let r = radius as isize;
+
+        for dy in -r..=r {
+            for dx in -r..=r {
+                let px = cx + dx;
+                let py = cy + dy;
+
+                if px < 0 || py < 0 ||
+                   (px as usize) >= self.size ||
+                   (py as usize) >= self.height {
+                    continue;
+                }
+
+                let dist_sq = (dx * dx + dy * dy) as f32;
+                let r_sq = (r * r) as f32;
+
+                if dist_sq <= r_sq {
+                    let idx = (py as usize) * self.size + (px as usize);
+                    let dist = dist_sq.sqrt();
+                    let color = if (r as f32 - dist).abs() < 1.0 {
+                        border_color
+                    } else {
+                        fill_color
+                    };
+
+                    self.buffer[idx] = color;
+                }
+            }
+        }
     }
 
     pub fn close(&mut self) {

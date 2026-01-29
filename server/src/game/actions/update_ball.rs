@@ -24,8 +24,8 @@ impl GameState {
     pub fn update_ball_carrie(&mut self) {
         if !self.ball.is_carried && self.ball.z <= 3.5 {
             for (team, player) in
-            self.home_players.iter_mut().map(|p| ('H', p))
-            .chain(self.away_players.iter_mut().map(|p| ('A', p))) {
+            self.home_team.players.iter_mut().map(|p| ('H', p))
+            .chain(self.away_team.players.iter_mut().map(|p| ('A', p))) {
                 let distance = ((player.x - self.ball.x).powi(2) + (player.y - self.ball.y).powi(2)).sqrt();
                 if distance < 1.0 && self.ball.z <= player.size + 50.0 { // 50 cm player arm
                     let is_successful = rand::random::<f32>() * 100.0 > (self.field.weather / 2) as f32;
@@ -50,6 +50,7 @@ impl GameState {
                         },
                         _ => {}
                     }
+                    self.state.name = "play".to_string();
                     self.state.team = team;
                     self.ball.y = player.y;
                     self.state.y = self.ball.y;
@@ -77,6 +78,8 @@ impl GameState {
                 print!("Scrum contest\n");
             }
         }
-        self.ball.x += direction;
+        if ((self.ball.x - self.state.x).powi(2) + (self.ball.y - self.state.y).powi(2)).sqrt() < self.state.size - 1.0 {
+            self.ball.x += direction;
+        }
     }
 }

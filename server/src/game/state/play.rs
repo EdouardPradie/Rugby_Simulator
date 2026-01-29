@@ -63,7 +63,6 @@ impl GameState {
 
         self.update_ball_velocity();
         self.update_ball_carrie();
-
-        // Apply rules of rugby (incomming)
+        self.check_ball_position();
     }
 }
