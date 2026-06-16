@@ -55,6 +55,7 @@ impl GameState {
 
         for (num, dx, dy) in scrum_offsets(-1.0) {
             if let Some(p) = north_team.iter_mut().find(|p| p.number == num) {
+                p.ball_pos = false;
                 p.x = self.state.x + dx;
                 if num == 9 && self.state.y > (self.field.height / 2) as f32 {
                     p.y = self.state.y - dy;
@@ -73,6 +74,7 @@ impl GameState {
 
         for (num, dx, dy) in scrum_offsets(1.0) {
             if let Some(p) = south_team.iter_mut().find(|p| p.number == num) {
+                p.ball_pos = false;
                 p.x = self.state.x + dx;
                 if num == 9 && self.state.y <= (self.field.height / 2) as f32 {
                     p.y = self.state.y + dy;

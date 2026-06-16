@@ -1,8 +1,0 @@
-
-Graphics mode enabled.
-Server listening on 127.0.0.1:7878
-
-New client connected 127.0.0.1:58777.
-Initialization message received from 127.0.0.1:58777
-Initialized game state: scrum
-Ball position: 69.5 31 0
