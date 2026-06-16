@@ -145,11 +145,6 @@ impl GameState {
                 self.home_team.bench.push(Player { x, y, number: (i + 1), ball_pos: false, size, pound, speed, foot, p_foot, p_tackle, is_tackle: false, is_tackler: false });
             } else {
                 self.home_team.players.push(Player { x, y, number: (i + 1), ball_pos: false, size, pound, speed, foot, p_foot, p_tackle, is_tackle:false, is_tackler: false });
-                if i == 9 {
-                    // Set the half opener player as the one with the ball
-                    self.home_team.players[i].ball_pos = true;
-                    self.ball.is_carried = true;
-                }
             }
         }
 

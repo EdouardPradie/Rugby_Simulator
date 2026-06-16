@@ -89,7 +89,6 @@ impl GameState {
         }
     }
 
-
     pub fn check_ball_position(&mut self) {
         if self.ball.y < 1.0 || self.ball.y > self.field.height as f32 + 1.0 {
             let side = if self.ball.y < 1.0 { "T" } else { "B" };
