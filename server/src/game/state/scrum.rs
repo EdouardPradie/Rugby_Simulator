@@ -33,6 +33,7 @@ impl GameState {
                         if player_index >= 7 && player_index < 15 {
                             self.run(team, number, direction, true);
                         } else  {
+                            print!("{}|{:.2}|", self.addr, (self.time as f32)/100.0);
                             print!("Player {} {} cannot run during scrum\n", team, number);
                         }
                     },
@@ -52,6 +53,7 @@ impl GameState {
                         if player_index >= 7 && player_index < 15 {
                             self.run(team, number, direction, false);
                         } else  {
+                            print!("{}|{:.2}|", self.addr, (self.time as f32)/100.0);
                             print!("Player {} {} cannot walk during scrum\n", team, number);
                         }
                     },
@@ -67,8 +69,10 @@ impl GameState {
                         .position(|p| p.number == number as usize)
                         .unwrap_or(15);
                         if player_index >= 9 && player_index < 15 {
+                            print!("{}|{:.2}|", self.addr, (self.time as f32)/100.0);
                             print!("Player {} {} is not in scrum\n", team, number);
                         } else if player_index <= 6 {
+                            print!("{}|{:.2}|", self.addr, (self.time as f32)/100.0);
                             print!("Player {} {} add to push in scrum\n", team, number);
                         } else if player_index == 7 || player_index == 8 {
                             self.try_catch_ball_in_scrum(team, number);
@@ -99,6 +103,7 @@ impl GameState {
                         }
                     },
                     _ => {
+                        print!("{}|{:.2}|", self.addr, (self.time as f32)/100.0);
                         print!("Unknown action in scrum: {}\n", action);
                     },
                 }

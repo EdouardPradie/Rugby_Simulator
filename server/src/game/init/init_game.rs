@@ -24,6 +24,7 @@ impl GameState {
             weather: 0,
         };
         let time = 0;
+        let addr = String::new();
         let home_team = Team {
             players: Vec::new(),
             bench: Vec::new(),
@@ -43,14 +44,14 @@ impl GameState {
         let ball: Ball = Ball { x: 50.0, y: 35.0, z: 1.0, is_carried: false };
         let ball_throw = BallThrow { vx: 0.0, vy: 0.0, vz: 0.0, active: false };
 
-        Self { state, field, time, home_team, away_team, ball, ball_throw }
+        Self { state, field, time, addr, home_team, away_team, ball, ball_throw }
     }
 
     //INIT
 
-    pub fn initialize(&mut self, field: String, home_players: Vec<String>, away_players: Vec<String>, state: String) {
+    pub fn initialize(&mut self, field: String, home_players: Vec<String>, away_players: Vec<String>, state: String, addr: String) {
         // Parse the field and players from the input
-
+        self.addr = addr;
         // Initialize field
         let field_info: Vec<&str> = field.split('_').collect();
         self.field.width = field_info.get(0)

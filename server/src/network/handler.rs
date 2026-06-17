@@ -57,7 +57,7 @@ pub fn handle_client(mut stream: TcpStream, display_enable: bool, run_time: bool
                         }
                     }
 
-                    client.initialize(field.clone(), home_players, away_players, state);
+                    client.initialize(field.clone(), home_players, away_players, state, addr.to_string());
                     if display_enable {
                         std::thread::sleep(std::time::Duration::from_millis(240));
                         let _ = tx.send(ClientEvent::Initialized {

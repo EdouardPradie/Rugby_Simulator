@@ -24,6 +24,7 @@ impl GameState {
                 let is_successful = rand::random::<f32>() * 100.0 < p.p_foot;
 
                 if !is_successful {
+                    print!("{}|{:.2}|", self.addr, (self.time as f32)/100.0);
                     print!("Failed kick\n");
                     let horizontal_dev_deg = (rand::random::<f32>() * 20.0) - 10.0; // -10° to +10°
                     dir += horizontal_dev_deg.to_radians();
@@ -34,6 +35,7 @@ impl GameState {
                     let loss = 0.80 + rand::random::<f32>() * 0.2; // between 80% and 100%
                     speed *= loss;
                 } else {
+                    print!("{}|{:.2}|", self.addr, (self.time as f32)/100.0);
                     print!("Success kick\n");
                 }
 

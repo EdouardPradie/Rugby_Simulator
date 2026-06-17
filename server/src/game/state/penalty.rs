@@ -25,6 +25,7 @@ impl GameState {
                 self.setup_scrum(self.state.team, self.state.x, self.state.y);
             },
             _ => {
+                print!("{}|{:.2}|", self.addr, (self.time as f32)/100.0);
                 print!("Unknown action in penalty: {}\n", action);
             }
         }

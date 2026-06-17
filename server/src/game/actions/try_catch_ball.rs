@@ -22,11 +22,13 @@ impl GameState {
 
                 match team {
                     'H' => {
+                        print!("{}|{:.2}|", self.addr, (self.time as f32)/100.0);
                         print!("Home player {} picked up the ball in scrum\n", p.number);
                         self.ball.x = p.x + if self.field.home_direction_try == 'N' { 0.5 } else { -0.5 };
                         self.state.x = self.ball.x;
                     },
                     'A' => {
+                        print!("{}|{:.2}|", self.addr, (self.time as f32)/100.0);
                         print!("Away player {} picked up the ball in scrum\n", p.number);
                         self.ball.x = p.x + if self.field.home_direction_try == 'N' { -0.5 } else { 0.5 };
                         self.state.x = self.ball.x;
@@ -58,6 +60,7 @@ impl GameState {
 
             if distance_ball < 1.0 && distance_ruck >= 1.0 {
                 if is_offside {
+                    print!("{}|{:.2}|", self.addr, (self.time as f32)/100.0);
                     print!("Offside penalty for {}\n", self.state.team);
                     return true;
                 }
@@ -67,11 +70,13 @@ impl GameState {
 
                 match team {
                     'H' => {
+                        print!("{}|{:.2}|", self.addr, (self.time as f32)/100.0);
                         print!("Home player {} picked up the ball in scrum\n", p.number);
                         self.ball.x = p.x + if self.field.home_direction_try == 'N' { 0.5 } else { -0.5 };
                         self.state.x = self.ball.x;
                     },
                     'A' => {
+                        print!("{}|{:.2}|", self.addr, (self.time as f32)/100.0);
                         print!("Away player {} picked up the ball in scrum\n", p.number);
                         self.ball.x = p.x + if self.field.home_direction_try == 'N' { -0.5 } else { 0.5 };
                         self.state.x = self.ball.x;
@@ -106,6 +111,7 @@ impl GameState {
             if distance >= self.state.size &&
             ((diff == 1.0 && player.x < self.state.x + diff) ||
             (diff == -1.0 && player.x > self.state.x + diff)) {
+                print!("{}|{:.2}|", self.addr, (self.time as f32)/100.0);
                 print!("Player {} is offside\n", player.number);
                 return true;
             }

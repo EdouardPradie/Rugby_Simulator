@@ -133,6 +133,7 @@ impl GameState {
             i += 1;
         }
 
+        print!("{}|{:.2}|", self.addr, (self.time as f32)/100.0);
         print!("Setting up scrum for team {} at ({}, {})\n", self.state.team, self.state.x, self.state.y);
     }
 
@@ -155,6 +156,7 @@ impl GameState {
         };
         let diff = if kick_direction == 'N' { 0.5 } else { -0.5 };
 
+        print!("{}|{:.2}|", self.addr, (self.time as f32)/100.0);
         print!("Setting up free kick for team {} by player {} to {} and {} high\n",
             self.state.team, number, direction, high);
 
@@ -218,6 +220,7 @@ impl GameState {
         };
         let diff = if kick_direction == 'N' { 0.5 } else { -0.5 };
 
+        print!("{}|{:.2}|", self.addr, (self.time as f32)/100.0);
         print!("Setting up penalty kick for team {} by player {} to {} and {} high\n",
             self.state.team, number, direction, high);
 

@@ -30,6 +30,7 @@ impl GameState {
                 if distance < 1.0 && self.ball.z <= player.size + 50.0 { // 50 cm player arm
                     let is_successful = rand::random::<f32>() * 100.0 > (self.field.weather / 2) as f32;
                     if !is_successful {
+                        print!("{}|{:.2}|", self.addr, (self.time as f32)/100.0);
                         print!("Player {} failed to pick up the ball due to weather\n", player.number);
                         continue;
                     }
@@ -39,11 +40,13 @@ impl GameState {
 
                     match team {
                         'H' => {
+                            print!("{}|{:.2}|", self.addr, (self.time as f32)/100.0);
                             print!("Home player {} picked up the ball\n", player.number);
                             self.ball.x = player.x + if self.field.home_direction_try == 'N' { 0.5 } else { -0.5 };
                             self.state.x = self.ball.x;
                         },
                         'A' => {
+                            print!("{}|{:.2}|", self.addr, (self.time as f32)/100.0);
                             print!("Away player {} picked up the ball\n", player.number);
                             self.ball.x = player.x + if self.field.home_direction_try == 'N' { -0.5 } else { 0.5 };
                             self.state.x = self.ball.x;
@@ -75,6 +78,7 @@ impl GameState {
             let reverse_probability = diff_ratio.clamp(0.0, 1.0);
             if rand::random::<f32>() < reverse_probability {
                 direction = -direction;
+                print!("{}|{:.2}|", self.addr, (self.time as f32)/100.0);
                 print!("Scrum contest\n");
             }
         }

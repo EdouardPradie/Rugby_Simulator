@@ -12,6 +12,7 @@ impl GameState {
             self.state.name = "play".to_string();
             self.state.x = self.ball.x;
             self.state.y = self.ball.y;
+            print!("{}|{:.2}|", self.addr, (self.time as f32)/100.0);
             print!("Ball out of scrum, resuming play\n");
         }
     }
@@ -25,6 +26,7 @@ impl GameState {
                 let distance = ((player.x - self.state.x).powi(2) + (player.y - self.state.y).powi(2)).sqrt();
                 if distance < 1.0 {
                     let team_fouled = if team == 'H' { 'A' } else { 'H' };
+                    print!("{}|{:.2}|", self.addr, (self.time as f32)/100.0);
                     print!("Tackler penalty: ball for {}\n", team_fouled);
                     return true;
                 } else {
@@ -72,9 +74,11 @@ impl GameState {
                 self.ball.is_carried = true;
                 self.ball.z = 1.0;
                 if self.state.team == 'H' {
+                    print!("{}|{:.2}|", self.addr, (self.time as f32)/100.0);
                     print!("Away player {} picked up the ball from ruck\n", player.number);
                     self.ball.x = player.x + if self.field.home_direction_try == 'N' { -0.5 } else { 0.5 };
                 } else {
+                    print!("{}|{:.2}|", self.addr, (self.time as f32)/100.0);
                     print!("Home player {} picked up the ball from ruck\n", player.number);
                     self.ball.x = player.x + if self.field.home_direction_try == 'N' { 0.5 } else { -0.5 };
                 }
