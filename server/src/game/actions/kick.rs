@@ -44,6 +44,9 @@ impl GameState {
                 let vz = speed * elev.sin();
 
                 self.ball_throw = BallThrow {
+                    prev_x: self.ball.x,
+                    prev_y: self.ball.y,
+                    prev_z: self.ball.z,
                     vx,
                     vy,
                     vz,

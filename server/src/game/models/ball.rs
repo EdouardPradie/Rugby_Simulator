@@ -8,6 +8,9 @@ pub struct Ball {
 
 #[derive(Clone, Copy)]
 pub struct BallThrow {
+    pub prev_x: f32,
+    pub prev_y: f32,
+    pub prev_z: f32,
     pub vx: f32,
     pub vy: f32,
     pub vz: f32,

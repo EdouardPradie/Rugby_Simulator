@@ -7,10 +7,10 @@ const GROUND_OUT_COLOR: u32 = 0xFFD9D9D9;
 const PENALTY_COLOR: u32 = 0xFFC6FAF6;
 const PENALTY_BUDDIES_COLOR: u32 = 0xFF5AD8CC;
 const GOAL_DISTANCE: f32 = 5.6;
-const COLOR_TEAM1: u32 = 0xFFA12222;
+const COLOR_TEAM1: u32 = 0xFFFFFFFF;
 const COLOR_TEAM2: u32 = 0xFF000000;
-const COLOR_TEAM1_NUM: u32 = 0xFFFFFFFF;
-const COLOR_TEAM2_NUM: u32 = 0xFFFFFFFF;
+const COLOR_TEAM1_NUM: u32 = 0xFFA12222;
+const COLOR_TEAM2_NUM: u32 = 0xFFFA0000;
 const WHITE: u32 = 0xFFFFFFFF;
 const BLACK: u32 = 0xFF000000;
 const SCRUM: u32 = 0xFFB195EE;
@@ -501,7 +501,7 @@ impl Display {
                 pixel_per_cell * 2 + pixel_per_cell / 2,
                 pixel_per_cell * 5,
                 pixel_per_cell / 2,
-                (away_score / 10) as u8,
+                home_score as u8,
                 COLOR_TEAM1_NUM
             );
         }
@@ -533,7 +533,7 @@ impl Display {
                 pixel_per_cell * 7 + 1,
                 pixel_per_cell * 5,
                 pixel_per_cell / 2,
-                (away_score / 10) as u8,
+                away_score as u8,
                 COLOR_TEAM2_NUM
             );
         }

@@ -64,8 +64,8 @@ impl GameState {
             }
         }
 
+        self.check_ball_position();
         self.update_ball_velocity();
         self.update_ball_carrie();
-        self.check_ball_position();
     }
 }

@@ -86,6 +86,7 @@ pub fn handle_client(mut stream: TcpStream, display_enable: bool, run_time: bool
                     (b"play", GameState::play),
                     (b"free-kick", GameState::play),
                     (b"penalty-kick", GameState::play),
+                    (b"transformation-kick", GameState::play),
                     (b"scrum", GameState::scrum),
                     (b"ruck", GameState::ruck),
                     (b"set-penalty", GameState::penalty),

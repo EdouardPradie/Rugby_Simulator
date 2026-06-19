@@ -42,7 +42,7 @@ impl GameState {
             penalty: 0,
         };
         let ball: Ball = Ball { x: 50.0, y: 35.0, z: 1.0, is_carried: false };
-        let ball_throw = BallThrow { vx: 0.0, vy: 0.0, vz: 0.0, active: false };
+        let ball_throw = BallThrow { prev_x: 0.0, prev_y: 0.0, prev_z: 0.0, vx: 0.0, vy: 0.0, vz: 0.0, active: false };
 
         Self { state, field, time, addr, home_team, away_team, ball, ball_throw }
     }

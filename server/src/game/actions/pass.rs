@@ -36,6 +36,9 @@ impl GameState {
                     let speed = (PASS_DIST * GRAVITY).sqrt() / 1.12; // Empirical correction
 
                     self.ball_throw = BallThrow {
+                        prev_x: self.ball.x,
+                        prev_y: self.ball.y,
+                        prev_z: self.ball.z,
                         vx: speed * high_rad.cos() * direction_rad.cos(),
                         vy: speed * high_rad.cos() * direction_rad.sin(),
                         vz: speed * high_rad.sin(),

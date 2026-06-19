@@ -6,6 +6,10 @@ impl GameState {
     // PLAY
     pub fn update_ball_velocity(&mut self) {
         if self.ball_throw.active {
+            self.ball_throw.prev_x = self.ball.x;
+            self.ball_throw.prev_y = self.ball.y;
+            self.ball_throw.prev_z = self.ball.z;
+
             self.ball.x += self.ball_throw.vx * DT;
             self.ball.y += self.ball_throw.vy * DT;
             self.ball.z += self.ball_throw.vz * DT;

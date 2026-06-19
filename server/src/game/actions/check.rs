@@ -94,9 +94,74 @@ impl GameState {
     }
 
     pub fn check_ball_position(&mut self) {
-        if self.ball.y < 1.0 || self.ball.y > self.field.height as f32 + 1.0 {
-            let side = if self.ball.y < 1.0 { "T" } else { "B" };
-            let x = self.ball.x.clamp(self.field.try_size as f32 + 6.0, (self.field.try_size + self.field.width) as f32 - 5.0);
+        // Check if the ball is out of bounds on the try zone
+        // Check if the ball is out of bounds on the left or right side
+
+        // Check if the ball is carried by a player
+        if self.ball.is_carried || !self.ball_throw.active {
+            return;
+        }
+
+        // Check if the ball pass a penalty
+        let goal_post = if self.field.home_direction_try == 'N' {
+            if self.state.team == 'H' {'N'} else {'S'}
+        } else {
+            if self.state.team == 'H' {'S'} else {'N'}
+        };
+
+        let goal_post_half_size = 2.8;
+        let goal_post_x = if goal_post == 'N' { self.field.width as f32 + self.field.try_size as f32 } else { self.field.try_size as f32 };
+        let goal_post_y = self.field.height as f32 / 2.0;
+
+        if  (goal_post == 'N' &&
+        self.ball.x > goal_post_x &&
+        self.ball_throw.prev_x < goal_post_x) ||
+        (goal_post == 'S'  &&
+        self.ball.x < goal_post_x &&
+        self.ball_throw.prev_x > goal_post_x) {
+            let dix = self.ball.x - self.ball_throw.prev_x;
+            let diy = self.ball.y - self.ball_throw.prev_y;
+            let djx = 0.0;
+            let djy = goal_post_half_size * 2.0;
+
+            let cross = dix * djy - diy * djx;
+            let is_goal = if cross.abs() < 1e-10 {
+                false
+            } else {
+                let dx_start = goal_post_x - self.ball_throw.prev_x;
+                let dy_start = goal_post_y - goal_post_half_size - self.ball_throw.prev_y;
+
+                let t = (dx_start * djy - dy_start * djx) / cross;
+                let u = (dx_start * diy - dy_start * dix) / cross;
+
+                t >= 0.0 && t <= 1.0 && u >= 0.0 && u <= 1.0
+            };
+
+            if is_goal {
+                if self.state.name == "play" || self.state.name == "penalty-kick" {
+                    print!("{}|{:.2}|", self.addr, (self.time as f32)/100.0);
+                    if self.state.name == "play" {
+                        print!("Drop scored by team {}\n", self.state.team);
+                    } else {
+                        print!("Penalty scored by team {}\n", self.state.team);
+                    }
+                    if self.state.team == 'H' {
+                        self.home_team.score += 3;
+                    } else {
+                        self.away_team.score += 3;
+                    }
+                }
+                if self.state.name == "transformation-kick" {
+                    print!("{}|{:.2}|", self.addr, (self.time as f32)/100.0);
+                    print!("Penalty scored by team {}\n", self.state.team);
+                    if self.state.team == 'H' {
+                        self.home_team.score += 2;
+                    } else {
+                        self.away_team.score += 2;
+                    }
+                }
+                //self.setup_restart()
+            }
         }
     }
 }
