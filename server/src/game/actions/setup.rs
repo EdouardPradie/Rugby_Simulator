@@ -54,9 +54,9 @@ impl GameState {
         };
 
         for (num, dx, dy) in scrum_offsets(-1.0) {
-            if let Some(p) = north_team.iter_mut().find(|p| p.number == num) {
+            if let Some(p) = north_team.iter_mut().find(|p: &&mut crate::game::models::Player| p.number == num) {
                 p.ball_pos = false;
-                p.x = self.state.x + dx;
+                p.x = (self.state.x + dx).clamp(self.field.try_size as f32, (self.field.width + self.field.try_size) as f32);
                 if num == 9 && self.state.y > (self.field.height / 2) as f32 {
                     p.y = self.state.y - dy;
                 } else {
@@ -75,7 +75,7 @@ impl GameState {
         for (num, dx, dy) in scrum_offsets(1.0) {
             if let Some(p) = south_team.iter_mut().find(|p| p.number == num) {
                 p.ball_pos = false;
-                p.x = self.state.x + dx;
+                p.x = (self.state.x + dx).clamp(self.field.try_size as f32, (self.field.width + self.field.try_size) as f32);
                 if num == 9 && self.state.y <= (self.field.height / 2) as f32 {
                     p.y = self.state.y + dy;
                 } else {
@@ -115,20 +115,22 @@ impl GameState {
 
         let mut i = 0;
         for p in attack_team.iter_mut().filter(|p| p.number >= 10) {
+            p.ball_pos = false;
             if p.number == 11 || p.number == 14 {
                 continue;
             }
-            p.x = pts.get(i).unwrap().0;
+            p.x = pts.get(i).unwrap().0.clamp(self.field.try_size as f32, (self.field.width + self.field.try_size) as f32);
             p.y =  pts.get(i).unwrap().1;
             i += 1;
         }
 
         i = 0;
         for p in defense_team.iter_mut().filter(|p| p.number >= 10) {
+            p.ball_pos = false;
             if p.number == 11 || p.number == 14 {
                 continue;
             }
-            p.x = self.state.x + defense_line;
+            p.x = (self.state.x + defense_line).clamp(self.field.try_size as f32, (self.field.width + self.field.try_size) as f32);
             p.y =  pts.get(i).unwrap().1;
             i += 1;
         }
@@ -269,5 +271,111 @@ impl GameState {
         }
 
         self.kick(self.state.team, number as i32, direction, high);
+    }
+
+    pub fn setup_restart(&mut self, team: char) {
+        print!("{}|{:.2}|", self.addr, (self.time as f32)/100.0);
+        print!("Setting up restart for team {}\n", team);
+        self.state.name = "restart".to_string();
+        self.state.team = team;
+        self.state.x = self.field.try_size as f32 + self.field.width as f32 / 2.0;
+        self.state.y = self.field.height as f32 / 2.0;
+        self.state.size = 0.0;
+
+        self.ball.is_carried = true;
+        self.ball.x = self.state.x;
+        self.ball.y = self.state.y;
+        self.ball.z = 1.0;
+        self.ball_throw.vx = 0.0;
+        self.ball_throw.vy = 0.0;
+        self.ball_throw.vz = 0.0;
+        self.ball_throw.active = false;
+        self.ball_throw.prev_x = 0.0;
+        self.ball_throw.prev_y = 0.0;
+        self.ball_throw.prev_z = 0.0;
+
+        let (kick_team, receive_team, direction) = if team == 'H' {
+            (&mut self.home_team.players, &mut self.away_team.players, self.field.home_direction_try)
+        } else {
+            (&mut self.away_team.players, &mut self.home_team.players, if self.field.home_direction_try == 'N' { 'S' } else { 'N' })
+        };
+        let k_max = kick_team.len() - 1;
+        let r_max = receive_team.len() - 1;
+
+        let position_kick= if direction == 'N' {[1, 4, 12, 9,
+                                                            8, 14, 5, 0,
+                                                            6, 7, 13, 11,
+                                                            10, 2, 3]
+                                                        } else {
+                                                            [2, 9, 14, 10,
+                                                            11, 12, 6, 3,
+                                                            5, 7, 1, 8,
+                                                            4, 13, 0]
+                                                        };
+
+        for (i, player) in kick_team.iter_mut().enumerate() {
+            if i == 9 {
+                player.ball_pos = true;
+            }
+            player.x = if direction == 'N' {
+                if i == 9 {
+                    self.state.x - 0.5
+                } else {
+                    self.state.x - 1.5
+                }
+            } else {
+                if i == 9 {
+                    self.state.x + 0.5
+                } else {
+                    self.state.x + 1.5
+                }
+            };
+            player.y = ((position_kick[i] as f32) * ((self.field.height - 6) as f32 / k_max as f32)) + 3.0;
+        }
+
+        let position_receive = if direction == 'N' {[1, 4, 12, 9,
+                                                                8, 14, 5, 0,
+                                                                6, 10, 13, 11,
+                                                                7, 2, 3]
+                                                            } else {
+                                                                [2, 7, 14, 10,
+                                                                11, 12, 6, 3,
+                                                                5, 9, 1, 8,
+                                                                4, 13, 0]
+                                                            };
+
+        for (i, player) in receive_team.iter_mut().enumerate() {
+            let x_min: f32 = if direction == 'N' {
+                self.state.x + 12.0
+            } else {
+                self.field.try_size as f32 + 2.0
+            };
+            let x_max = if direction == 'N' {
+                (self.field.width + self.field.try_size) as f32 - 2.0
+            } else {
+                self.state.x - 12.0
+            };
+
+            let cols = ((r_max as f32).sqrt().ceil()) as usize;
+            let rows = (r_max + cols - 1) / cols;
+
+            // let col = i % cols;
+            // let row = i / cols;
+            let col = position_receive[i] % cols;
+            let row = position_receive[i] / cols;
+
+            if (direction == 'S' && col == 3 && row == 0) || (direction == 'N' && col == 0 && row == 0) {
+                player.x = x_min + ((x_max - x_min) / 2.0);
+                player.y = self.field.height as f32 / 2.0;
+            } else {
+                if direction == 'N' && row >= 3 {
+                    player.x = x_min + ((col + 1) as f32 + 0.5) * ((x_max - x_min) / cols as f32);
+                    player.y = (row as f32 + 0.5) * (self.field.height as f32 / rows as f32);
+                } else {
+                    player.x = x_min + (col as f32 + 0.5) * ((x_max - x_min) / cols as f32);
+                    player.y = (row as f32 + 0.5) * (self.field.height as f32 / rows as f32);
+                }
+            }
+        }
     }
 }

@@ -32,6 +32,7 @@ impl GameState {
             try_scored: 0,
             transformation: 0,
             penalty: 0,
+            drop: 0,
         };
         let away_team = Team {
             players: Vec::new(),
@@ -40,6 +41,7 @@ impl GameState {
             try_scored: 0,
             transformation: 0,
             penalty: 0,
+            drop: 0,
         };
         let ball: Ball = Ball { x: 50.0, y: 35.0, z: 1.0, is_carried: false };
         let ball_throw = BallThrow { prev_x: 0.0, prev_y: 0.0, prev_z: 0.0, vx: 0.0, vy: 0.0, vz: 0.0, active: false };

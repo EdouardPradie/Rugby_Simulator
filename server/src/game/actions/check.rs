@@ -5,7 +5,6 @@ use crate::game::models::*;
 impl GameState {
 
     //SCRUM
-
     pub fn check_ball_out_of_scrum(&mut self) {
         let distance = ((self.ball.x - self.state.x).powi(2) + (self.ball.y - self.state.y).powi(2)).sqrt();
         if !self.ball.is_carried && distance >= SCRUM_SIZE {
@@ -113,12 +112,12 @@ impl GameState {
         let goal_post_x = if goal_post == 'N' { self.field.width as f32 + self.field.try_size as f32 } else { self.field.try_size as f32 };
         let goal_post_y = self.field.height as f32 / 2.0;
 
-        if  (goal_post == 'N' &&
+        if ((goal_post == 'N' &&
         self.ball.x > goal_post_x &&
         self.ball_throw.prev_x < goal_post_x) ||
         (goal_post == 'S'  &&
         self.ball.x < goal_post_x &&
-        self.ball_throw.prev_x > goal_post_x) {
+        self.ball_throw.prev_x > goal_post_x)) && self.ball.z > 3.0 {
             let dix = self.ball.x - self.ball_throw.prev_x;
             let diy = self.ball.y - self.ball_throw.prev_y;
             let djx = 0.0;
@@ -142,13 +141,22 @@ impl GameState {
                     print!("{}|{:.2}|", self.addr, (self.time as f32)/100.0);
                     if self.state.name == "play" {
                         print!("Drop scored by team {}\n", self.state.team);
+                        if self.state.team == 'H' {
+                            self.home_team.score += 3;
+                            self.home_team.drop += 1;
+                        } else {
+                            self.away_team.score += 3;
+                            self.away_team.drop += 1;
+                        }
                     } else {
                         print!("Penalty scored by team {}\n", self.state.team);
-                    }
-                    if self.state.team == 'H' {
-                        self.home_team.score += 3;
-                    } else {
-                        self.away_team.score += 3;
+                        if self.state.team == 'H' {
+                            self.home_team.score += 3;
+                            self.home_team.penalty += 1;
+                        } else {
+                            self.away_team.score += 3;
+                            self.away_team.penalty += 1;
+                        }
                     }
                 }
                 if self.state.name == "transformation-kick" {
@@ -156,11 +164,13 @@ impl GameState {
                     print!("Penalty scored by team {}\n", self.state.team);
                     if self.state.team == 'H' {
                         self.home_team.score += 2;
+                        self.home_team.transformation += 1;
                     } else {
                         self.away_team.score += 2;
+                        self.away_team.transformation += 1;
                     }
                 }
-                //self.setup_restart()
+                self.setup_restart(if self.state.team == 'H' {'A'} else {'H'});
             }
         }
     }

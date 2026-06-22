@@ -168,7 +168,7 @@ pub fn penalty_test(message: &str) -> String {
         }
     }
 
-    result.push_str(&format!("P/10/17/30\n"));
+    result.push_str(&format!("P/10/18/35\n"));
     // result.push_str(&format!("K/10/315/30\n"));
     // result.push_str(&format!("S\n"));
 

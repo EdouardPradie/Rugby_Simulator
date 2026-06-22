@@ -80,8 +80,8 @@ impl Display {
         self.size = self.width + 2 * self.try_size;
         self.window = Window::new(
             "Rugby Simulator",
-            self.size,
-            self.height,
+            self.size + (2 * pixel_per_cell),
+            self.height + (2 * pixel_per_cell),
             WindowOptions::default(),
         ).unwrap_or_else(|e| {
             panic!("Unable to open window: {}", e);
@@ -425,6 +425,14 @@ impl Display {
             PENALTY_COLOR,
             PENALTY_BUDDIES_COLOR
         );
+
+        // for w in 0..self.size {
+        //     for h in 0..self.height {
+        //         if h % pixel_per_cell == 0 || w % pixel_per_cell == 0 {
+        //             self.buffer[self.size * h + w] = BLACK;
+        //         }
+        //     }
+        // }
     }
 
     fn draw_time(&mut self, time: u64, pixel_per_cell: usize) {

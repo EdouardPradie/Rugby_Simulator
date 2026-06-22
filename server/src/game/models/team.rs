@@ -8,4 +8,5 @@ pub struct Team {
     pub try_scored: u32,
     pub transformation: u32,
     pub penalty: u32,
+    pub drop: u32,
 }

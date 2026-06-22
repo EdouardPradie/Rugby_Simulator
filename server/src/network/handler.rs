@@ -83,7 +83,9 @@ pub fn handle_client(mut stream: TcpStream, display_enable: bool, run_time: bool
                 // ACTION HANDLING
 
                 let handlers: &[(&[u8], fn(&mut GameState, String))] = &[
+                    (b"start", GameState::play),
                     (b"play", GameState::play),
+                    (b"restart", GameState::play),
                     (b"free-kick", GameState::play),
                     (b"penalty-kick", GameState::play),
                     (b"transformation-kick", GameState::play),
