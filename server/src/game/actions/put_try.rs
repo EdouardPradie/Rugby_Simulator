@@ -1,4 +1,4 @@
-use crate::game::{game_state::GameState};
+use crate::game::game_state::GameState;
 
 impl GameState {
     pub fn put_try(&mut self, team: char, number: i32) {

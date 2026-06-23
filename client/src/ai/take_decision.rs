@@ -4,7 +4,11 @@ pub fn start_test(message: &str) -> String {
 
     for line in message.lines() {
         // Skip the "start" line
-        if line.starts_with("start") || line.starts_with("play") || line.starts_with("free-kick") {
+        if line.starts_with("start") ||
+        line.starts_with("play") ||
+        line.starts_with("free-kick") ||
+        line.starts_with("penalty-kick") ||
+        line.starts_with("transformation-kick") {
             if line.starts_with("start") {
                 print!("GAME START DETECTED\n");
                 started = true;
@@ -13,10 +17,8 @@ pub fn start_test(message: &str) -> String {
             continue;
         }
 
-        if line.starts_with("scrum") {
-            let val = line.trim();
-            result.push_str(&format!("{}\n", val));
-            continue;
+        if line.trim().starts_with("scrum") {
+            return "error".to_string();
         }
 
         if line.trim().is_empty() {

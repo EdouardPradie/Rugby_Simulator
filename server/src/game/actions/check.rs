@@ -161,7 +161,7 @@ impl GameState {
                 }
                 if self.state.name == "transformation-kick" {
                     print!("{}|{:.2}|{}|", self.addr, (self.time as f32)/100.0, self.state.name);
-                    print!("Penalty scored by team {}\n", self.state.team);
+                    print!("Transformation scored by team {}\n", self.state.team);
                     if self.state.team == 'H' {
                         self.home_team.score += 2;
                         self.home_team.transformation += 1;

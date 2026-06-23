@@ -71,13 +71,13 @@ impl GameState {
                 match team {
                     'H' => {
                         print!("{}|{:.2}|{}|", self.addr, (self.time as f32)/100.0, self.state.name);
-                        print!("Home player {} picked up the ball in scrum\n", p.number);
+                        print!("Home player {} picked up the ball in ruck\n", p.number);
                         self.ball.x = p.x + if self.field.home_direction_try == 'N' { 0.5 } else { -0.5 };
                         self.state.x = self.ball.x;
                     },
                     'A' => {
                         print!("{}|{:.2}|{}|", self.addr, (self.time as f32)/100.0, self.state.name);
-                        print!("Away player {} picked up the ball in scrum\n", p.number);
+                        print!("Away player {} picked up the ball in ruck\n", p.number);
                         self.ball.x = p.x + if self.field.home_direction_try == 'N' { -0.5 } else { 0.5 };
                         self.state.x = self.ball.x;
                     },

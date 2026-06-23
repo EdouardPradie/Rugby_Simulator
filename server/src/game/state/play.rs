@@ -5,9 +5,6 @@ impl GameState {
     pub fn play(&mut self, input: String) {
         let mut update = false;
         self.time += 25;
-        if self.state.name == "start" {
-            self.state.name = "play".to_string();
-        }
 
         let actions: Vec<&str> = input.split('\n').collect();
         for action in actions {
@@ -72,5 +69,9 @@ impl GameState {
         self.check_ball_position();
         self.update_ball_velocity();
         self.update_ball_carrie();
+
+        if self.state.name == "start" || self.state.name == "restart" {
+            self.state.name = "play".to_string();
+        }
     }
 }

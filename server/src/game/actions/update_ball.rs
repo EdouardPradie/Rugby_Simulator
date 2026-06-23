@@ -26,6 +26,11 @@ impl GameState {
     }
 
     pub fn update_ball_carrie(&mut self) {
+        if self.state.name == "scrum" {
+            print!("{}|{:.2}|{}|", self.addr, (self.time as f32)/100.0, self.state.name);
+            print!("Strange process happen, function call out of context\n");
+            return;
+        }
         if !self.ball.is_carried && self.ball.z <= 3.5 {
             for (team, player) in
             self.home_team.players.iter_mut().map(|p| ('H', p))

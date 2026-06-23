@@ -48,41 +48,45 @@ fn main() {
                         break;
                     }
                     Ok(n) => {
-                        let msg = String::from_utf8_lossy(&buffer[..n]);
+                        let msg = String::from_utf8_lossy(&buffer[..n]).trim_matches(char::from(0)).to_string();
 
-                        if msg.starts_with("set-penalty") {
-                            let decision = penalty_test(msg.as_ref());
+                        if msg.trim().starts_with("scrum") {
+                            let decision = scrum_test(msg.trim().as_ref());
                             if let Err(e) = stream.write_all(decision.as_bytes()) {
                                 println!("Failed to send decision: {}", e);
                                 break;
                             }
                             continue;
                         }
-                        if msg.starts_with("set-transformation") {
-                            let decision = transformation_test(msg.as_ref());
+                        if msg.trim().starts_with("set-penalty") {
+                            let decision = penalty_test(msg.trim().as_ref());
                             if let Err(e) = stream.write_all(decision.as_bytes()) {
                                 println!("Failed to send decision: {}", e);
                                 break;
                             }
                             continue;
                         }
-                        if msg.starts_with("ruck") {
-                            let decision = ruck_test(msg.as_ref());
+                        if msg.trim().starts_with("set-transformation") {
+                            let decision = transformation_test(msg.trim().as_ref());
                             if let Err(e) = stream.write_all(decision.as_bytes()) {
                                 println!("Failed to send decision: {}", e);
                                 break;
                             }
                             continue;
                         }
-                        if msg.starts_with("scrum") {
-                            let decision = scrum_test(msg.as_ref());
+                        if msg.trim().starts_with("ruck") {
+                            let decision = ruck_test(msg.trim().as_ref());
                             if let Err(e) = stream.write_all(decision.as_bytes()) {
                                 println!("Failed to send decision: {}", e);
                                 break;
                             }
                             continue;
                         }
-                        let decision = start_test(msg.as_ref());
+
+                        let decision = start_test(msg.trim().as_ref());
+                        if decision == "error".to_string() {
+                            break;
+                        }
                         if let Err(e) = stream.write_all(decision.as_bytes()) {
                             println!("Failed to send decision: {}", e);
                             break;
