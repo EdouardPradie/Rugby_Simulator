@@ -35,7 +35,7 @@ impl GameState {
 
         if let Some(p) = players.iter_mut().find(|p| p.number == number as usize) {
             if p.is_tackle {
-                print!("{}|{:.2}|", self.addr, (self.time as f32)/100.0);
+                print!("{}|{:.2}|{}|", self.addr, (self.time as f32)/100.0, self.state.name);
                 print!("Player {} {} is tackled and cannot move in ruck\n", team, number);
                 return;
             }
@@ -52,20 +52,20 @@ impl GameState {
                 if team == 'H' {
                     if (self.field.home_direction_try == 'S' && direction >= 135.0 && direction <= 225.0) ||
                     (self.field.home_direction_try == 'N' && (direction >= 315.0 || direction <= 45.0)) {
-                        print!("{}|{:.2}|", self.addr, (self.time as f32)/100.0);
+                        print!("{}|{:.2}|{}|", self.addr, (self.time as f32)/100.0, self.state.name);
                         print!("Home player {} go in ruck\n", number);
                     } else {
-                        print!("{}|{:.2}|", self.addr, (self.time as f32)/100.0);
+                        print!("{}|{:.2}|{}|", self.addr, (self.time as f32)/100.0, self.state.name);
                         print!("Penalty for {}\n", "A");
                     }
                 }
                 if team == 'A' {
                     if (self.field.home_direction_try == 'N' && direction >= 135.0 && direction <= 225.0) ||
                     (self.field.home_direction_try == 'S' && (direction >= 315.0 || direction <= 45.0)) {
-                        print!("{}|{:.2}|", self.addr, (self.time as f32)/100.0);
+                        print!("{}|{:.2}|{}|", self.addr, (self.time as f32)/100.0, self.state.name);
                         print!("Away player {} go in ruck\n", number);
                     } else {
-                        print!("{}|{:.2}|", self.addr, (self.time as f32)/100.0);
+                        print!("{}|{:.2}|{}|", self.addr, (self.time as f32)/100.0, self.state.name);
                         print!("Penalty for {}\n", "H");
                     }
                 }

@@ -92,6 +92,7 @@ pub fn handle_client(mut stream: TcpStream, display_enable: bool, run_time: bool
                     (b"scrum", GameState::scrum),
                     (b"ruck", GameState::ruck),
                     (b"set-penalty", GameState::penalty),
+                    (b"set-transformation", GameState::transformation),
                 ];
 
                 if status == 1 {

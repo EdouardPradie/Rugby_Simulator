@@ -11,7 +11,7 @@ impl GameState {
             self.state.name = "play".to_string();
             self.state.x = self.ball.x;
             self.state.y = self.ball.y;
-            print!("{}|{:.2}|", self.addr, (self.time as f32)/100.0);
+            print!("{}|{:.2}|{}|", self.addr, (self.time as f32)/100.0, self.state.name);
             print!("Ball out of scrum, resuming play\n");
         }
     }
@@ -25,7 +25,7 @@ impl GameState {
                 let distance = ((player.x - self.state.x).powi(2) + (player.y - self.state.y).powi(2)).sqrt();
                 if distance < 1.0 {
                     let team_fouled = if team == 'H' { 'A' } else { 'H' };
-                    print!("{}|{:.2}|", self.addr, (self.time as f32)/100.0);
+                    print!("{}|{:.2}|{}|", self.addr, (self.time as f32)/100.0, self.state.name);
                     print!("Tackler penalty: ball for {}\n", team_fouled);
                     return true;
                 } else {
@@ -73,11 +73,11 @@ impl GameState {
                 self.ball.is_carried = true;
                 self.ball.z = 1.0;
                 if self.state.team == 'H' {
-                    print!("{}|{:.2}|", self.addr, (self.time as f32)/100.0);
+                    print!("{}|{:.2}|{}|", self.addr, (self.time as f32)/100.0, self.state.name);
                     print!("Away player {} picked up the ball from ruck\n", player.number);
                     self.ball.x = player.x + if self.field.home_direction_try == 'N' { -0.5 } else { 0.5 };
                 } else {
-                    print!("{}|{:.2}|", self.addr, (self.time as f32)/100.0);
+                    print!("{}|{:.2}|{}|", self.addr, (self.time as f32)/100.0, self.state.name);
                     print!("Home player {} picked up the ball from ruck\n", player.number);
                     self.ball.x = player.x + if self.field.home_direction_try == 'N' { 0.5 } else { -0.5 };
                 }
@@ -93,13 +93,13 @@ impl GameState {
     }
 
     pub fn check_ball_position(&mut self) {
-        // Check if the ball is out of bounds on the try zone
         // Check if the ball is out of bounds on the left or right side
 
         // Check if the ball is carried by a player
         if self.ball.is_carried || !self.ball_throw.active {
             return;
         }
+        // Check if the ball is out of bounds on the try zone
 
         // Check if the ball pass a penalty
         let goal_post = if self.field.home_direction_try == 'N' {
@@ -138,7 +138,7 @@ impl GameState {
 
             if is_goal {
                 if self.state.name == "play" || self.state.name == "penalty-kick" {
-                    print!("{}|{:.2}|", self.addr, (self.time as f32)/100.0);
+                    print!("{}|{:.2}|{}|", self.addr, (self.time as f32)/100.0, self.state.name);
                     if self.state.name == "play" {
                         print!("Drop scored by team {}\n", self.state.team);
                         if self.state.team == 'H' {
@@ -160,7 +160,7 @@ impl GameState {
                     }
                 }
                 if self.state.name == "transformation-kick" {
-                    print!("{}|{:.2}|", self.addr, (self.time as f32)/100.0);
+                    print!("{}|{:.2}|{}|", self.addr, (self.time as f32)/100.0, self.state.name);
                     print!("Penalty scored by team {}\n", self.state.team);
                     if self.state.team == 'H' {
                         self.home_team.score += 2;

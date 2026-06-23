@@ -13,6 +13,7 @@ use ai::take_decision::start_test;
 use ai::take_decision::ruck_test;
 use ai::take_decision::scrum_test;
 use ai::take_decision::penalty_test;
+use ai::take_decision::transformation_test;
 
 fn main() {
     // Load environment variables from .env file
@@ -51,6 +52,14 @@ fn main() {
 
                         if msg.starts_with("set-penalty") {
                             let decision = penalty_test(msg.as_ref());
+                            if let Err(e) = stream.write_all(decision.as_bytes()) {
+                                println!("Failed to send decision: {}", e);
+                                break;
+                            }
+                            continue;
+                        }
+                        if msg.starts_with("set-transformation") {
+                            let decision = transformation_test(msg.as_ref());
                             if let Err(e) = stream.write_all(decision.as_bytes()) {
                                 println!("Failed to send decision: {}", e);
                                 break;

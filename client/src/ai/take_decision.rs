@@ -33,8 +33,18 @@ pub fn start_test(message: &str) -> String {
                 continue;
             }
             if info.contains("/B:") {
-                result.push_str(&format!("{}:P135\n", key));
-                continue;
+                if let Some((dist, more_info)) = info.trim().split_once(' ') {
+                    if dist.parse::<f32>().unwrap_or(0.0) > 112.0 && more_info != "" {
+                            result.push_str(&format!("{}:G\n", key));
+                            continue;
+                    } else if dist.parse::<f32>().unwrap_or(0.0) > 80.0 {
+                        result.push_str(&format!("{}:R0\n", key));
+                        continue;
+                    } else {
+                        result.push_str(&format!("{}:P135\n", key));
+                        continue;
+                    }
+                }
             }
             result.push_str(&format!("{}:{}\n", key, "S"));
             continue;
@@ -171,6 +181,32 @@ pub fn penalty_test(message: &str) -> String {
     result.push_str(&format!("P/10/18/35\n"));
     // result.push_str(&format!("K/10/315/30\n"));
     // result.push_str(&format!("S\n"));
+
+    return result;
+}
+
+pub fn transformation_test(message: &str) -> String {
+    let mut result = String::new();
+
+    for line in message.lines() {
+        // Skip the "start" line
+
+        if line.starts_with("set-transformation") {
+            let val: &str = line.trim();
+            result.push_str(&format!("{}\n", val));
+            continue;
+        }
+
+        if line.trim().is_empty() {
+            continue;
+        }
+
+        if line.starts_with("time:") {
+            continue;
+        }
+    }
+
+    result.push_str(&format!("K/10/10/0/30\n"));
 
     return result;
 }

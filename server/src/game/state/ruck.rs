@@ -32,7 +32,7 @@ impl GameState {
                     },
                     'S' => continue,
                     _ => {
-                        print!("{}|{:.2}|", self.addr, (self.time as f32)/100.0);
+                        print!("{}|{:.2}|{}|", self.addr, (self.time as f32)/100.0, self.state.name);
                         print!("Unknown action in ruck: {}\n", action);
                     },
                 }

@@ -36,13 +36,18 @@ impl GameState {
                         let number = player[1..].parse().unwrap_or(0);
                         self.tackle(team, number);
                     },
+                    'G' => {
+                        let team = player.chars().next().unwrap();
+                        let number = player[1..].parse().unwrap_or(0);
+                        self.put_try(team, number);
+                    },
                     'K' => {
                         let team = player.chars().next().unwrap();
                         let number = player[1..].parse().unwrap_or(0);
                         let tmp: Vec<&str> = action[1..].split('/').collect();
                         let direction = tmp[0].parse().unwrap_or(0.0);
                         let high = tmp[1].parse().unwrap_or(0.0);
-                        print!("{}|{:.2}|", self.addr, (self.time as f32)/100.0);
+                        print!("{}|{:.2}|{}|", self.addr, (self.time as f32)/100.0, self.state.name);
                         println!("Player {} {} Kick in way {} at {}", team, number, direction, high);
                         self.kick(team, number, direction, high);
                     },
@@ -51,13 +56,13 @@ impl GameState {
                         let number = player[1..].parse().unwrap_or(0);
                         let tmp: Vec<&str> = action[1..].split('/').collect();
                         let direction = tmp[0].parse().unwrap_or(0.0);
-                        print!("{}|{:.2}|", self.addr, (self.time as f32)/100.0);
+                        print!("{}|{:.2}|{}|", self.addr, (self.time as f32)/100.0, self.state.name);
                         println!("Player {} {} Pass in way {}", team, number, direction);
                         update = self.pass(team, number, direction);
                     },
                     'S' => continue,
                     _ => {
-                        print!("{}|{:.2}|", self.addr, (self.time as f32)/100.0);
+                        print!("{}|{:.2}|{}|", self.addr, (self.time as f32)/100.0, self.state.name);
                         print!("Unknown action: {}\n", action);
                     },
                 }

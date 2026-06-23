@@ -1,10 +1,11 @@
 Play&Start /       Action       /      Usage
-R	       /        Run         /     Courir      ✅
-W	       /        Walk        /     Avance      ✅
-T          /       Tackle       /    Plaquage     ❌
-P          /        Pass        / Passe de balle  ✅
-K          /        Kick        /  Coup de pied   ✅
-S          /     Stop - Stay    /  Ne bouge pas   ✅
+R	       /        Run         /     Courir         ✅
+W	       /        Walk        /     Avance         ✅
+T          /       Tackle       /    Plaquage        ✅
+P          /        Pass        / Passe de balle     ✅
+G          /      Put Try       / Applatir l'éssaie  ✅
+K          /        Kick        /  Coup de pied      ✅
+S          /     Stop - Stay    /  Ne bouge pas      ✅
 
 Field
 GROUND_COLOR= #66D575

@@ -49,7 +49,7 @@ impl GameState {
         }
 
         if pass_invalid {
-            print!("{}|{:.2}|", self.addr, (self.time as f32)/100.0);
+            print!("{}|{:.2}|{}|", self.addr, (self.time as f32)/100.0, self.state.name);
             print!("Invalid pass direction for player {} {}\n", team, number);
             self.setup_scrum(if team == 'H' {'A'} else {'H'} , px, py);
             return true;

@@ -2,6 +2,19 @@ use crate::game::game_state::GameState;
 use crate::game::constants::*;
 
 impl GameState {
+    pub fn setup_ruck(&mut self, x: f32, y: f32, team: char) {
+        self.ball.is_carried = false;
+        self.ball.x = x - 0.5;
+        self.ball.y = y;
+        self.ball.z = 0.0;
+        self.state.name = "ruck".to_string();
+        self.state.x = x;
+        self.state.y = y;
+        self.state.team = team;
+        print!("{}|{:.2}|{}|", self.addr, (self.time as f32)/100.0, self.state.name);
+        print!("Ruck formed at position {} {}\n", x, y);
+    }
+
     pub fn setup_scrum(&mut self, team: char, x: f32, y: f32) {
         let x = x.clamp(self.field.try_size as f32 + 6.0, (self.field.width + self.field.try_size) as f32 - 6.0);
         let y = y.clamp(6.0, self.field.height as f32 - 6.0);
@@ -135,7 +148,7 @@ impl GameState {
             i += 1;
         }
 
-        print!("{}|{:.2}|", self.addr, (self.time as f32)/100.0);
+        print!("{}|{:.2}|{}|", self.addr, (self.time as f32)/100.0, self.state.name);
         print!("Setting up scrum for team {} at ({}, {})\n", self.state.team, self.state.x, self.state.y);
     }
 
@@ -158,7 +171,7 @@ impl GameState {
         };
         let diff = if kick_direction == 'N' { 0.5 } else { -0.5 };
 
-        print!("{}|{:.2}|", self.addr, (self.time as f32)/100.0);
+        print!("{}|{:.2}|{}|", self.addr, (self.time as f32)/100.0, self.state.name);
         print!("Setting up free kick for team {} by player {} to {} and {} high\n",
             self.state.team, number, direction, high);
 
@@ -222,7 +235,7 @@ impl GameState {
         };
         let diff = if kick_direction == 'N' { 0.5 } else { -0.5 };
 
-        print!("{}|{:.2}|", self.addr, (self.time as f32)/100.0);
+        print!("{}|{:.2}|{}|", self.addr, (self.time as f32)/100.0, self.state.name);
         print!("Setting up penalty kick for team {} by player {} to {} and {} high\n",
             self.state.team, number, direction, high);
 
@@ -273,8 +286,72 @@ impl GameState {
         self.kick(self.state.team, number as i32, direction, high);
     }
 
+    pub fn setup_transformation(&mut self, number: usize, distance: f32, direction: f32, high: f32) {
+        self.time += 25;
+        self.state.name = "transformation-kick".to_string();
+
+        let (kick_team, receive_team, kick_direction) = if self.state.team == 'H' {
+            (&mut self.home_team.players, &mut self.away_team.players, self.field.home_direction_try, )
+        } else {
+            (&mut self.away_team.players, &mut self.home_team.players, if self.field.home_direction_try == 'N' { 'S' } else { 'N' })
+        };
+        let diff = if kick_direction == 'N' { 0.5 } else { -0.5 };
+
+        self.state.x = if kick_direction == 'S' { self.field.try_size as f32 + distance + 1.0 } else { self.field.try_size as f32 + self.field.width as f32 - distance + 1.0 };
+
+        print!("{}|{:.2}|{}|", self.addr, (self.time as f32)/100.0, self.state.name);
+        print!("Setting up transformation kick for team {} by player {} to {} and {} high\n",
+            self.state.team, number, direction, high);
+
+        self.ball.is_carried = true;
+        self.ball.x = self.state.x + diff;
+        self.ball.y = self.state.y;
+        self.ball.z = 1.0;
+
+        if let Some(kicker) = kick_team.iter_mut().find(|p| p.number == number) {
+            kicker.ball_pos = true;
+            kicker.x = self.state.x;
+            kicker.y = self.state.y;
+        }
+
+        for player in kick_team.iter_mut() {
+            if player.number == number {
+                continue;
+            }
+            player.x = self.state.x - (diff * 3.0);
+        }
+
+        for player in receive_team.iter_mut() {
+            if kick_direction == 'N' {
+                player.x = (self.field.width + self.field.try_size) as f32;
+            } else {
+                player.x = self.field.try_size as f32;
+            }
+        }
+
+        for (index, &num) in POSITIONS.iter().enumerate() {
+            if let Some(p) = kick_team.iter_mut().find(|p| p.number == num && p.number != number) {
+                let sup_ten = if p.number > 10 && p.number % 2 == 0 { 3.0 } else { 0.0 };
+                if self.state.y < (self.field.height / 2) as f32 {
+                    p.y = 6.0 + (index as f32 * 3.0 - sup_ten);
+                } else {
+                    p.y = (self.field.height - ((POSITIONS.len() - 2) * 3) - 6) as f32 + (index as f32 * 3.0 - sup_ten);
+                }
+            }
+            if let Some(p) = receive_team.iter_mut().find(|p| p.number == num) {
+                if self.state.y < (self.field.height / 2) as f32 {
+                    p.y = 6.0 + ((POSITIONS.len() - 1) * 3) as f32 - index as f32 * 3.0;
+                } else {
+                    p.y = self.field.height as f32 - 6.0 - index as f32 * 3.0;
+                }
+            }
+        }
+
+        self.kick(self.state.team, number as i32, direction, high);
+    }
+
     pub fn setup_restart(&mut self, team: char) {
-        print!("{}|{:.2}|", self.addr, (self.time as f32)/100.0);
+        print!("{}|{:.2}|{}|", self.addr, (self.time as f32)/100.0, self.state.name);
         print!("Setting up restart for team {}\n", team);
         self.state.name = "restart".to_string();
         self.state.team = team;
