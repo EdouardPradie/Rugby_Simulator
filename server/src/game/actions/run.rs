@@ -73,7 +73,7 @@ impl GameState {
         }
     }
 
-    pub fn run_offside(&mut self, team: char, number: i32, direction: f32, is_running: bool) {
+    pub fn run_line_out(&mut self, team: char, number: i32, direction: f32, is_running: bool) {
         let players: &mut Vec<crate::game::models::Player> = if team == 'H' {
             &mut self.home_team.players
         } else {

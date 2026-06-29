@@ -59,7 +59,7 @@ fn main() {
                     let field_width: usize = env::var("FIELD_MAX_WIDTH").unwrap_or("100".to_string()).parse().unwrap();
                     let field_height: usize = env::var("FIELD_MAX_HEIGHT").unwrap_or("70".to_string()).parse().unwrap();
                     let try_size: usize = env::var("TRY_MIN_SIZE").unwrap_or("10".to_string()).parse().unwrap();
-                    let display = Display::new((field_width * pixel_per_cell) + (2 * pixel_per_cell), (field_height * pixel_per_cell) + (2 * pixel_per_cell), try_size * pixel_per_cell);
+                    let display = Display::new((field_width + 2) * pixel_per_cell, (field_height + 2) * pixel_per_cell,try_size * pixel_per_cell);
 
                     displays.insert(client_id, display);
                 }

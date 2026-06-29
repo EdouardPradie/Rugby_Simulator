@@ -16,7 +16,7 @@ impl GameState {
     }
 
     pub fn setup_scrum(&mut self, team: char, x: f32, y: f32) {
-        let x = x.clamp(self.field.try_size as f32 + 6.0, (self.field.width + self.field.try_size) as f32 - 6.0);
+        let x = x.clamp(self.field.try_size as f32 + 6.0, (self.field.width + self.field.try_size) as f32 - 4.0);
         let y = y.clamp(6.0, self.field.height as f32 - 6.0);
 
         self.state.name = "scrum".to_string();
@@ -69,17 +69,17 @@ impl GameState {
         for (num, dx, dy) in scrum_offsets(-1.0) {
             if let Some(p) = north_team.iter_mut().find(|p: &&mut crate::game::models::Player| p.number == num) {
                 p.ball_pos = false;
-                p.x = (self.state.x + dx).clamp(self.field.try_size as f32, (self.field.width + self.field.try_size) as f32);
-                if num == 9 && self.state.y > (self.field.height / 2) as f32 {
+                p.x = (self.state.x + dx).clamp(self.field.try_size as f32 + 1.0, (self.field.width + self.field.try_size) as f32 + 1.0);
+                if num == 9 && self.state.y > (self.field.height / 2) as f32 + 1.0 {
                     p.y = self.state.y - dy;
                 } else {
                     p.y = self.state.y + dy;
                 }
                 if num == 11 || num == 14 {
                     if dy == -1.0 {
-                        p.y = 10.0;
+                        p.y = 6.0;
                     } else if dy == 1.0 {
-                        p.y = self.field.height as f32 - 10.0;
+                        p.y = self.field.height as f32 - 4.0;
                     }
                 }
             }
@@ -88,17 +88,17 @@ impl GameState {
         for (num, dx, dy) in scrum_offsets(1.0) {
             if let Some(p) = south_team.iter_mut().find(|p| p.number == num) {
                 p.ball_pos = false;
-                p.x = (self.state.x + dx).clamp(self.field.try_size as f32, (self.field.width + self.field.try_size) as f32);
-                if num == 9 && self.state.y <= (self.field.height / 2) as f32 {
+                p.x = (self.state.x + dx).clamp(self.field.try_size as f32 + 1.0, (self.field.width + self.field.try_size) as f32 + 1.0);
+                if num == 9 && self.state.y <= (self.field.height / 2) as f32 + 1.0 {
                     p.y = self.state.y + dy;
                 } else {
                     p.y = self.state.y - dy;
                 }
                 if num == 11 || num == 14 {
                     if dy == 1.0 {
-                        p.y = 10.0;
+                        p.y = 6.0;
                     } else if dy == -1.0 {
-                        p.y = self.field.height as f32 - 10.0;
+                        p.y = self.field.height as f32 - 4.0;
                     }
                 }
             }
@@ -112,10 +112,10 @@ impl GameState {
         };
 
         let y1: f32 = self.state.y;
-        let y2: f32 = if self.state.y < (self.field.height / 2) as f32 {
-            self.field.height as f32 - 15.0
+        let y2: f32 = if self.state.y < (self.field.height / 2) as f32 + 1.0 {
+            self.field.height as f32 - 14.0
         } else {
-            15.0
+            16.0
         };
 
         let mut pts = Vec::with_capacity(4);
@@ -132,7 +132,7 @@ impl GameState {
             if p.number == 11 || p.number == 14 {
                 continue;
             }
-            p.x = pts.get(i).unwrap().0.clamp(self.field.try_size as f32, (self.field.width + self.field.try_size) as f32);
+            p.x = pts.get(i).unwrap().0.clamp(self.field.try_size as f32 + 1.0, (self.field.width + self.field.try_size) as f32 + 1.0);
             p.y =  pts.get(i).unwrap().1;
             i += 1;
         }
@@ -143,7 +143,7 @@ impl GameState {
             if p.number == 11 || p.number == 14 {
                 continue;
             }
-            p.x = (self.state.x + defense_line).clamp(self.field.try_size as f32, (self.field.width + self.field.try_size) as f32);
+            p.x = (self.state.x + defense_line).clamp(self.field.try_size as f32 + 1.0, (self.field.width + self.field.try_size) as f32 + 1.0);
             p.y =  pts.get(i).unwrap().1;
             i += 1;
         }
@@ -201,14 +201,14 @@ impl GameState {
         for (index, &num) in POSITIONS.iter().enumerate() {
             if let Some(p) = kick_team.iter_mut().find(|p| p.number == num && p.number != number) {
                 let sup_ten = if p.number > 10 && p.number % 2 == 0 { 3.0 } else { 0.0 };
-                if self.state.y < (self.field.height / 2) as f32 {
+                if self.state.y < (self.field.height / 2) as f32 + 1.0 {
                     p.y = 6.0 + (index as f32 * 3.0 - sup_ten);
                 } else {
                     p.y = (self.field.height - ((POSITIONS.len() - 2) * 3) - 6) as f32 + (index as f32 * 3.0 - sup_ten);
                 }
             }
             if let Some(p) = receive_team.iter_mut().find(|p| p.number == num) {
-                if self.state.y < (self.field.height / 2) as f32 {
+                if self.state.y < (self.field.height / 2) as f32 + 1.0 {
                     p.y = 6.0 + ((POSITIONS.len() - 2) * 3) as f32 - index as f32 * 3.0;
                     if index == POSITIONS.len() - 1 {
                         p.x += 20.0 * diff;
@@ -259,23 +259,23 @@ impl GameState {
 
         for player in receive_team.iter_mut() {
             if kick_direction == 'N' {
-                player.x = (self.field.width + self.field.try_size) as f32;
+                player.x = (self.field.width + self.field.try_size) as f32 + 1.0;
             } else {
-                player.x = self.field.try_size as f32;
+                player.x = self.field.try_size as f32 + 1.0;
             }
         }
 
         for (index, &num) in POSITIONS.iter().enumerate() {
             if let Some(p) = kick_team.iter_mut().find(|p| p.number == num && p.number != number) {
                 let sup_ten = if p.number > 10 && p.number % 2 == 0 { 3.0 } else { 0.0 };
-                if self.state.y < (self.field.height / 2) as f32 {
+                if self.state.y < (self.field.height / 2) as f32 + 1.0 {
                     p.y = 6.0 + (index as f32 * 3.0 - sup_ten);
                 } else {
                     p.y = (self.field.height - ((POSITIONS.len() - 2) * 3) - 6) as f32 + (index as f32 * 3.0 - sup_ten);
                 }
             }
             if let Some(p) = receive_team.iter_mut().find(|p| p.number == num) {
-                if self.state.y < (self.field.height / 2) as f32 {
+                if self.state.y < (self.field.height / 2) as f32 + 1.0 {
                     p.y = 6.0 + ((POSITIONS.len() - 1) * 3) as f32 - index as f32 * 3.0;
                 } else {
                     p.y = self.field.height as f32 - 6.0 - index as f32 * 3.0;
@@ -323,23 +323,23 @@ impl GameState {
 
         for player in receive_team.iter_mut() {
             if kick_direction == 'N' {
-                player.x = (self.field.width + self.field.try_size) as f32;
+                player.x = (self.field.width + self.field.try_size) as f32 + 1.0;
             } else {
-                player.x = self.field.try_size as f32;
+                player.x = self.field.try_size as f32 + 1.0;
             }
         }
 
         for (index, &num) in POSITIONS.iter().enumerate() {
             if let Some(p) = kick_team.iter_mut().find(|p| p.number == num && p.number != number) {
                 let sup_ten = if p.number > 10 && p.number % 2 == 0 { 3.0 } else { 0.0 };
-                if self.state.y < (self.field.height / 2) as f32 {
+                if self.state.y < (self.field.height / 2) as f32 + 1.0 {
                     p.y = 6.0 + (index as f32 * 3.0 - sup_ten);
                 } else {
                     p.y = (self.field.height - ((POSITIONS.len() - 2) * 3) - 6) as f32 + (index as f32 * 3.0 - sup_ten);
                 }
             }
             if let Some(p) = receive_team.iter_mut().find(|p| p.number == num) {
-                if self.state.y < (self.field.height / 2) as f32 {
+                if self.state.y < (self.field.height / 2) as f32 + 1.0 {
                     p.y = 6.0 + ((POSITIONS.len() - 1) * 3) as f32 - index as f32 * 3.0;
                 } else {
                     p.y = self.field.height as f32 - 6.0 - index as f32 * 3.0;
@@ -355,8 +355,8 @@ impl GameState {
         print!("Setting up restart for team {}\n", team);
         self.state.name = "restart".to_string();
         self.state.team = team;
-        self.state.x = self.field.try_size as f32 + self.field.width as f32 / 2.0;
-        self.state.y = self.field.height as f32 / 2.0;
+        self.state.x = self.field.try_size as f32 + self.field.width as f32 / 2.0 + 1.0;
+        self.state.y = self.field.height as f32 / 2.0 + 1.0;
         self.state.size = 0.0;
 
         self.ball.is_carried = true;
@@ -456,11 +456,66 @@ impl GameState {
         }
     }
 
-    pub fn setup_offside(&mut self, number: usize, h_line: Vec<&str>, a_line: Vec<&str>) {
+    pub fn setup_line_out(&mut self, number: usize, h_line: Vec<&str>, a_line: Vec<&str>) {
         print!("{}|{:.2}|{}|", self.addr, (self.time as f32)/100.0, self.state.name);
-        print!("Setting up an offside for team {} at {} {}", self.state.team, self.state.x, self.state.y);
+        print!("Setting up an line out for team {} at {} {}", self.state.team, self.state.x, self.state.y);
         print!(" size {} and aline H{} A{}\n", number, h_line.concat(), a_line.concat());
-        self.state.name = "offside".to_string();
-        self.state.size = 16.0;
+        self.state.name = "line_out".to_string();
+        self.state.size = if self.state.y == 0.5 { 0.0 } else { 16.0 };
+        let (throw_team, face_team, direction, t_line, f_line) = if self.state.team == 'H' {
+            (&mut self.home_team.players,
+            &mut self.away_team.players,
+            self.field.home_direction_try,
+            &h_line,
+            &a_line)
+        } else {
+            (&mut self.away_team.players,
+            &mut self.home_team.players,
+            if self.field.home_direction_try == 'N' { 'S' } else { 'N' },
+            &a_line,
+            &h_line
+        )
+        };
+        throw_team[1].ball_pos = true;
+        throw_team[1].x = self.state.x;
+        throw_team[1].y = self.state.y;
+        face_team[1].x = self.state.x + if direction == 'N' { 5.0 } else { -5.0 };
+        face_team[1].y = if self.state.y == 0.5 { 3.5 } else { self.field.height as f32 - 1.5 };
+        self.ball.is_carried = true;
+        self.ball.x = self.state.x;
+        let diff = if self.state.y == 0.5 { 0.5 } else { -0.5 };
+        self.ball.y = self.state.y + diff;
+
+        self.ball_throw.vx = 0.0;
+        self.ball_throw.vy = 0.0;
+        self.ball_throw.vz = 0.0;
+        self.ball_throw.active = false;
+        self.ball_throw.prev_x = self.ball.x;
+        self.ball_throw.prev_y = self.ball.y;
+        self.ball_throw.prev_z = self.ball.z;
+
+        for (index, t) in t_line.iter().enumerate() {
+            if let Some(p) = throw_team.iter_mut().find(|p| p.number == t.parse::<usize>().unwrap()) {
+                p.ball_pos = false;
+                p.x = self.state.x + if direction == 'N' { -1.0 } else { 1.0 };
+                if self.state.y == 0.5 {
+                    p.y = 6.5 + (index as f32 * 9.0 / (t_line.len() as f32 - 1.0));
+                } else {
+                    p.y = (self.field.height as f32 - 13.5) + (index as f32 * 9.0 / (t_line.len() as f32 - 1.0));
+                }
+            }
+        }
+
+        for (index, f) in f_line.iter().enumerate() {
+            if let Some(p) = face_team.iter_mut().find(|p| p.number == f.parse::<usize>().unwrap()) {
+                p.ball_pos = false;
+                p.x = self.state.x + if direction == 'N' { 1.0 } else { -1.0 };
+                if self.state.y == 0.5 {
+                    p.y = 6.5 + (index as f32 * 9.0 / (f_line.len() as f32 - 1.0));
+                } else {
+                    p.y = (self.field.height as f32 - 13.5) + (index as f32 * 9.0 / (f_line.len() as f32 - 1.0));
+                }
+            }
+        }
     }
 }

@@ -93,7 +93,7 @@ impl GameState {
     }
 
     pub fn check_ball_position(&mut self) {
-        if self.state.name == "offside" {
+        if self.state.name == "line_out" {
             print!("{}|{:.2}|{}|", self.addr, (self.time as f32)/100.0, self.state.name);
             print!("Strange process happen, function call out of context\n");
             return;
@@ -103,14 +103,14 @@ impl GameState {
         if self.ball.y < 1.0 ||
         self.ball.y > self.field.height as f32 + 1.0 {
             if self.ball.x > self.field.try_size as f32 + 1.0 ||
-            self.ball.x < self.field.width as f32 + self.field.try_size as f32 +1.0 {
+            self.ball.x < self.field.width as f32 + self.field.try_size as f32 + 1.0 {
                 // Check if the ball is out of bounds on the left or right side
                 print!("{}|{:.2}|{}|", self.addr, (self.time as f32)/100.0, self.state.name);
                 print!("Ball is out at {} {}\n", self.ball.x, self.ball.y);
                 if self.state.name == "free-kick" {
-                    self.ask_offside(self.state.team);
+                    self.ask_line_out(self.state.team);
                 } else {
-                    self.ask_offside(if self.state.team == 'H' {'A'} else {'B'});
+                    self.ask_line_out(if self.state.team == 'H' {'A'} else {'B'});
                 }
             } else {
                 // Check if the ball is out of bounds on the try zone (side)
@@ -140,8 +140,8 @@ impl GameState {
         };
 
         let goal_post_half_size = 2.8;
-        let goal_post_x = if goal_post == 'N' { self.field.width as f32 + self.field.try_size as f32 } else { self.field.try_size as f32 };
-        let goal_post_y = self.field.height as f32 / 2.0;
+        let goal_post_x = if goal_post == 'N' { self.field.width as f32 + self.field.try_size as f32 + 1.0 } else { self.field.try_size as f32 + 1.0 };
+        let goal_post_y = self.field.height as f32 / 2.0 + 1.0;
 
         if ((goal_post == 'N' &&
         self.ball.x > goal_post_x &&

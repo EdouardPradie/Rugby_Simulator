@@ -18,6 +18,12 @@ const SCRUM_LINE: u32 = 0xFF9267EE;
 const RUCK: u32 = 0xFF00DFFF;
 const RUCK_LINE: u32 = 0xFF20C2BD;
 const OFFSIDE_LINE: u32 = 0xFFE63319;
+const LINE_OUT_HALL_WIDTH: f32 = 3.0;
+const LINE_OUT_HALL_HEIGHT: f32 = 15.5;
+const LINE_OUT_LINE_FIVE: f32 = 5.5;
+const LINE_OUT: u32 = 0xFFFFAA11;
+const LINE_OUT_BORDER: u32 = 0xFFFF7F00;
+
 
 const FONT_3X5: [[&str; 5]; 10] = [
     [ "111", "101", "101", "101", "111" ], // 0
@@ -37,7 +43,8 @@ pub struct Display {
     buffer: Vec<u32>,
     width: usize,
     height: usize,
-    size: usize,
+    size_x: usize,
+    size_y: usize,
     try_size: usize,
     time: u64,
     is_initialized: bool,
@@ -58,7 +65,7 @@ impl Display {
         let time = 0;
         let is_initialized = false;
 
-        Self { window, buffer, width, height, size, try_size, time, is_initialized }
+        Self { window, buffer, width, height, size_x:size, size_y:height, try_size, time, is_initialized }
     }
 
     pub fn initialize(&mut self, field: String, pixel_per_cell: usize) {
@@ -77,17 +84,18 @@ impl Display {
             .and_then(|v| v.parse().ok())
             .unwrap_or(10) * pixel_per_cell;
 
-        self.size = self.width + 2 * self.try_size;
+        self.size_x = self.width + 2 * self.try_size + 2 * pixel_per_cell;
+        self.size_y = self.height + 2 * pixel_per_cell;
         self.window = Window::new(
             "Rugby Simulator",
-            self.size + (2 * pixel_per_cell),
-            self.height + (2 * pixel_per_cell),
+            self.size_x,
+            self.size_y,
             WindowOptions::default(),
         ).unwrap_or_else(|e| {
             panic!("Unable to open window: {}", e);
         });
         self.is_initialized = true;
-        self.buffer = vec![GROUND_COLOR; self.size * self.height];
+        self.buffer = vec![GROUND_COLOR; self.size_x * self.size_y];
     }
 
     pub fn render(&mut self, drawable: &Drawable, pixel_per_cell: usize) {
@@ -146,6 +154,22 @@ impl Display {
                     ((drawable.state.pos.x - drawable.state.size) * pixel_per_cell as f32) as usize,
                     OFFSIDE_LINE
                 );
+            },
+            "line_out" => {
+                self.draw_line(
+                    ((drawable.state.pos.x + 5.0) * pixel_per_cell as f32 - 1.0) as usize,
+                    OFFSIDE_LINE
+                );
+                self.draw_line(
+                    ((drawable.state.pos.x - 5.0) * pixel_per_cell as f32) as usize,
+                    OFFSIDE_LINE
+                );
+                self.draw_rectangle((drawable.state.pos.x * pixel_per_cell as f32) as usize,
+                (drawable.state.pos.y * pixel_per_cell as f32) as usize,
+                LINE_OUT,
+                LINE_OUT_BORDER,
+                pixel_per_cell,
+                drawable.state.size as usize * pixel_per_cell);
             },
             _ => {}
         }
@@ -239,7 +263,7 @@ impl Display {
 
         // Update the window
         self.window
-            .update_with_buffer(&self.buffer, self.size, self.height)
+            .update_with_buffer(&self.buffer, self.size_x, self.size_y)
             .unwrap();
     }
 
@@ -264,8 +288,8 @@ impl Display {
                             let px = x + col_idx * size + dx;
                             let py = y + row_idx * size + dy;
 
-                            if px < self.size && py * self.size + px < self.size * self.height {
-                                self.buffer[py * self.size + px] = color;
+                            if px < self.size_x && py * self.size_x + px < self.size_x * self.size_y {
+                                self.buffer[py * self.size_x + px] = color;
                             }
                         }
                     }
@@ -290,149 +314,153 @@ impl Display {
             println!("Width: {}, Height: {}, Try Size: {}, Pixel per Cell: {}", self.width, self.height, self.try_size, pixel_per_cell);
             return;
         }
-        for j in 0..self.size {
+
+        // for w in 0..self.size_x {
+        //     for h in 0..self.size_y {
+        //         if h % pixel_per_cell == 0 || w % pixel_per_cell == 0 {
+        //             self.buffer[self.size_x * h + w] = BLACK;
+        //         }
+        //     }
+        // }
+
+        // RAW
+        for j in 0..self.size_x {
             // Draw out lines
             for i in 0..pixel_per_cell {
-                self.buffer[(i * self.size) + j] = GROUND_OUT_COLOR;
-                self.buffer[(self.size * self.height) - ((i * self.size) + j) - 1] = GROUND_OUT_COLOR;
+                self.buffer[(i * self.size_x) + j] = GROUND_OUT_COLOR;
+                self.buffer[(self.size_x * self.size_y) - ((i * self.size_x) + j) - 1] = GROUND_OUT_COLOR;
             }
             // Draw hashed lines
             let center = (pixel_per_cell * 5) / 2;
-            if (j >= self.try_size + pixel_per_cell * 5 + 1) &&
-            (j < self.try_size + pixel_per_cell * 10 + 1) ||
-            (j >= self.try_size + (pixel_per_cell * 45) / 2 - center - (pixel_per_cell / 2 - 1)) &&
-            (j < self.try_size + (pixel_per_cell * 45) / 2 + center - (pixel_per_cell / 2 - 1)) ||
-            (j >= self.try_size + (pixel_per_cell * 81) / 2 - center - (pixel_per_cell / 2 - 1)) &&
-            (j < self.try_size + (pixel_per_cell * 81) / 2 + center - (pixel_per_cell / 2 - 1)) ||
-            (j >= self.try_size + self.width / 2 - center) &&
-            (j < self.try_size + self.width / 2 + center) ||
-            (j >= self.size - self.try_size - (pixel_per_cell * 81) / 2 - center + (pixel_per_cell / 2 - 1)) &&
-            (j < self.size - self.try_size - (pixel_per_cell * 81) / 2 + center + (pixel_per_cell / 2 - 1)) ||
-            (j >= self.size - self.try_size - (pixel_per_cell * 45) / 2 - center + (pixel_per_cell / 2 - 1)) &&
-            (j < self.size - self.try_size - (pixel_per_cell * 45) / 2 + center + (pixel_per_cell / 2 - 1)) ||
-            (j >= self.size - self.try_size - pixel_per_cell * 10 - 1) &&
-            (j < self.size - self.try_size - pixel_per_cell * 5 - 1) {
+            if (j > self.try_size + pixel_per_cell * 6) &&
+            (j < self.try_size + pixel_per_cell * 11) ||
+            (j > self.try_size + pixel_per_cell * 23 - center) &&
+            (j < self.try_size + pixel_per_cell * 23 + center) ||
+            (j > self.try_size + pixel_per_cell * 41 - center) &&
+            (j < self.try_size + pixel_per_cell * 41 + center) ||
+            (j > self.size_x / 2 - center) &&
+            (j < self.size_x / 2 + center) ||
+            (j > self.size_x - self.try_size - pixel_per_cell * 41 - center) &&
+            (j < self.size_x - self.try_size - pixel_per_cell * 41 + center) ||
+            (j > self.size_x - self.try_size - pixel_per_cell * 23 - center) &&
+            (j < self.size_x - self.try_size - pixel_per_cell * 23 + center) ||
+            (j > self.size_x - self.try_size - pixel_per_cell * 11) &&
+            (j < self.size_x - self.try_size - pixel_per_cell * 6) {
                 // Draw lines of 5 + 1 for out
-                self.buffer[((1 + 6 * pixel_per_cell) * self.size) + j] = GROUND_LINE_COLOR;
-                self.buffer[(self.size * self.height) - (((1 + 6 * pixel_per_cell) * self.size) + j) - 1] = GROUND_LINE_COLOR;
+                self.buffer[((6 * pixel_per_cell) * self.size_x) + j] = GROUND_LINE_COLOR;
+                self.buffer[(self.size_x * self.size_y) - (((6 * pixel_per_cell - 1) * self.size_x) + j)] = GROUND_LINE_COLOR;
                 // Draw lines of 15 + 1 for out
-                self.buffer[((1 + 16 * pixel_per_cell) * self.size) + j] = GROUND_LINE_COLOR;
-                self.buffer[(self.size * self.height) - (((1 + 16 * pixel_per_cell) * self.size) + j) - 1] = GROUND_LINE_COLOR;
+                self.buffer[((16 * pixel_per_cell) * self.size_x) + j] = GROUND_LINE_COLOR;
+                self.buffer[(self.size_x * self.size_y) - (((16 * pixel_per_cell - 1) * self.size_x) + j)] = GROUND_LINE_COLOR;
             }
         }
-        // Left & Right row
-        for j in 1..(self.height-1) {
+        // COL
+        for j in 0..self.size_y {
             // Draw out lines
             for i in 0..pixel_per_cell {
-                self.buffer[j * self.size + i] = GROUND_OUT_COLOR;
-                self.buffer[j * self.size + (self.size - i - 1)] = GROUND_OUT_COLOR;
+                self.buffer[j * self.size_x + i] = GROUND_OUT_COLOR;
+                self.buffer[j * self.size_x + (self.size_x - i - 1)] = GROUND_OUT_COLOR;
             }
-            // Draw the center line
-            self.buffer[j * self.size + (self.size / 2)] = GROUND_LINE_COLOR;
-            // Draw try lines
-            self.buffer[j * self.size + 1 + self.try_size] = GROUND_LINE_COLOR;
-            self.buffer[j * self.size + (self.size - self.try_size - 2)] = GROUND_LINE_COLOR;
-            // Draw lines of 22
-            self.buffer[j * self.size + 1 + self.try_size + (22 * pixel_per_cell)] = GROUND_LINE_COLOR;
-            self.buffer[j * self.size + (self.size - self.try_size - (22 * pixel_per_cell) - 2)] = GROUND_LINE_COLOR;
+            if j > pixel_per_cell && j < self.size_y - pixel_per_cell {
+                // Draw the center line
+                self.buffer[j * self.size_x + (self.size_x / 2)] = GROUND_LINE_COLOR;
+                // Draw try lines
+                self.buffer[j * self.size_x + self.try_size + pixel_per_cell] = GROUND_LINE_COLOR;
+                self.buffer[j * self.size_x + self.size_x - self.try_size - pixel_per_cell] = GROUND_LINE_COLOR;
+                // Draw lines of 22
+                self.buffer[j * self.size_x + self.try_size + (23 * pixel_per_cell)] = GROUND_LINE_COLOR;
+                self.buffer[j * self.size_x + self.size_x - self.try_size - (23 * pixel_per_cell)] = GROUND_LINE_COLOR;
+            }
             // Draw hashed lines of 5 + 1 for out
             let center = (pixel_per_cell * 5) / 2;
-            if (j >= pixel_per_cell * 6 - center + 1) &&
-            (j < pixel_per_cell * 6 + center + 1) ||
-            (j >= pixel_per_cell * 16 - center + 1) &&
-            (j < pixel_per_cell * 16 + center + 1) ||
-            (j >= self.height / 2 - center - pixel_per_cell * 5 - 1) &&
-            (j < self.height / 2 - center - 1) ||
-            (j >= self.height / 2 + center + 1) &&
-            (j < self.height / 2 + center + pixel_per_cell * 5 + 1) ||
-            (j >= self.height - pixel_per_cell * 16 - center - 1) &&
-            (j < self.height - pixel_per_cell * 16 + center - 1) ||
-            (j >= self.height - pixel_per_cell * 6 - center - 1) &&
-            (j < self.height - pixel_per_cell * 6 + center - 1) {
-                self.buffer[j * self.size + 1 + self.try_size + (5 * pixel_per_cell)] = GROUND_LINE_COLOR;
-                self.buffer[j * self.size + (self.size - self.try_size - (5 * pixel_per_cell) - 2)] = GROUND_LINE_COLOR;
+            if (j > pixel_per_cell * 6 - center) &&
+            (j < pixel_per_cell * 6 + center) ||
+            (j > pixel_per_cell * 16 - center) &&
+            (j < pixel_per_cell * 16 + center) ||
+            (j >= self.size_y / 2 - center - pixel_per_cell * 5) &&
+            (j <= self.size_y / 2 - center) ||
+            (j >= self.size_y / 2 + center) &&
+            (j <= self.size_y / 2 + center + pixel_per_cell * 5) ||
+            (j > self.size_y - pixel_per_cell * 16 - center) &&
+            (j < self.size_y - pixel_per_cell * 16 + center) ||
+            (j > self.size_y - pixel_per_cell * 6 - center) &&
+            (j < self.size_y - pixel_per_cell * 6 + center) {
+                self.buffer[j * self.size_x + self.try_size + (6 * pixel_per_cell)] = GROUND_LINE_COLOR;
+                self.buffer[j * self.size_x + self.size_x - self.try_size - (6 * pixel_per_cell)] = GROUND_LINE_COLOR;
             }
             // Draw hashed lines of 40 + 1 for out
-            if (j >= pixel_per_cell * 6 - center + 1) &&
-            (j < pixel_per_cell * 6 + center + 1) ||
-            (j >= pixel_per_cell * 16 - center + 1) &&
-            (j < pixel_per_cell * 16 + center + 1) ||
-            (j >= self.height / 2 - center - pixel_per_cell * 10 + 1) &&
-            (j < self.height / 2 - center - pixel_per_cell * 5 + 1) ||
-            (j >= self.height / 2 - center) &&
-            (j < self.height / 2 + center) ||
-            (j >= self.height / 2 + center + pixel_per_cell * 5 - 1) &&
-            (j < self.height / 2 + center + pixel_per_cell * 10 - 1) ||
-            (j >= self.height - pixel_per_cell * 16 - center - 1) &&
-            (j < self.height - pixel_per_cell * 16 + center - 1) ||
-            (j >= self.height - pixel_per_cell * 6 - center - 1) &&
-            (j < self.height - pixel_per_cell * 6 + center - 1) {
-                self.buffer[j * self.size + 1 + self.try_size + (40 * pixel_per_cell)] = GROUND_LINE_COLOR;
-                self.buffer[j * self.size + (self.size - self.try_size - (40 * pixel_per_cell) - 2)] = GROUND_LINE_COLOR;
+            if (j > pixel_per_cell * 6 - center) &&
+            (j < pixel_per_cell * 6 + center) ||
+            (j > pixel_per_cell * 16 - center) &&
+            (j < pixel_per_cell * 16 + center) ||
+            (j > self.size_y / 2 - center - pixel_per_cell * 10) &&
+            (j < self.size_y / 2 - center - pixel_per_cell * 5) ||
+            (j > self.size_y / 2 - center) &&
+            (j < self.size_y / 2 + center) ||
+            (j > self.size_y / 2 + center + pixel_per_cell * 5) &&
+            (j < self.size_y / 2 + center + pixel_per_cell * 10) ||
+            (j > self.size_y - pixel_per_cell * 16 - center) &&
+            (j < self.size_y - pixel_per_cell * 16 + center) ||
+            (j > self.size_y - pixel_per_cell * 6 - center) &&
+            (j < self.size_y - pixel_per_cell * 6 + center) {
+                self.buffer[j * self.size_x + self.try_size + (41 * pixel_per_cell)] = GROUND_LINE_COLOR;
+                self.buffer[j * self.size_x + self.size_x - self.try_size - (41 * pixel_per_cell)] = GROUND_LINE_COLOR;
             }
         }
 
         // Draw goal spots
         self.draw_square(
-            self.try_size + 1,
-            (self.height as f32 / 2.0 - (GOAL_DISTANCE / 2.0) * pixel_per_cell as f32) as usize,
+            self.try_size + pixel_per_cell,
+            (self.size_y as f32 / 2.0 - (GOAL_DISTANCE / 2.0) * pixel_per_cell as f32) as usize,
             pixel_per_cell,
             PENALTY_COLOR
         );
         self.draw_circle(
-            self.try_size + 1,
-            (self.height as f32 / 2.0 - (GOAL_DISTANCE / 2.0) * pixel_per_cell as f32) as usize,
+            self.try_size + pixel_per_cell,
+            (self.size_y as f32 / 2.0 - (GOAL_DISTANCE / 2.0) * pixel_per_cell as f32) as usize,
             pixel_per_cell / 3,
             PENALTY_COLOR,
             PENALTY_BUDDIES_COLOR
         );
         self.draw_square(
-            self.try_size + 1,
-            (self.height as f32 / 2.0 + (GOAL_DISTANCE / 2.0) * pixel_per_cell as f32) as usize,
+            self.try_size + pixel_per_cell,
+            (self.size_y as f32 / 2.0 + (GOAL_DISTANCE / 2.0) * pixel_per_cell as f32) as usize,
             pixel_per_cell,
             PENALTY_COLOR
         );
         self.draw_circle(
-            self.try_size + 1,
-            (self.height as f32 / 2.0 + (GOAL_DISTANCE / 2.0) * pixel_per_cell as f32) as usize,
+            self.try_size + pixel_per_cell,
+            (self.size_y as f32 / 2.0 + (GOAL_DISTANCE / 2.0) * pixel_per_cell as f32) as usize,
             pixel_per_cell / 3,
             PENALTY_COLOR,
             PENALTY_BUDDIES_COLOR
         );
         self.draw_square(
-            self.size - self.try_size - 2,
-            (self.height as f32 / 2.0 - (GOAL_DISTANCE / 2.0) * pixel_per_cell as f32) as usize,
+            self.size_x - self.try_size - pixel_per_cell,
+            (self.size_y as f32 / 2.0 - (GOAL_DISTANCE / 2.0) * pixel_per_cell as f32) as usize,
             pixel_per_cell,
             PENALTY_COLOR
         );
         self.draw_circle(
-            self.size - self.try_size - 2,
-            (self.height as f32 / 2.0 - (GOAL_DISTANCE / 2.0) * pixel_per_cell as f32) as usize,
+            self.size_x - self.try_size - pixel_per_cell,
+            (self.size_y as f32 / 2.0 - (GOAL_DISTANCE / 2.0) * pixel_per_cell as f32) as usize,
             pixel_per_cell / 3,
             PENALTY_COLOR,
             PENALTY_BUDDIES_COLOR
         );
         self.draw_square(
-            self.size - self.try_size - 2,
-            (self.height as f32 / 2.0 + (GOAL_DISTANCE / 2.0) * pixel_per_cell as f32) as usize,
+            self.size_x - self.try_size - pixel_per_cell,
+            (self.size_y as f32 / 2.0 + (GOAL_DISTANCE / 2.0) * pixel_per_cell as f32) as usize,
             pixel_per_cell,
             PENALTY_COLOR
         );
         self.draw_circle(
-            self.size - self.try_size - 2,
-            (self.height as f32 / 2.0 + (GOAL_DISTANCE / 2.0) * pixel_per_cell as f32) as usize,
+            self.size_x - self.try_size - pixel_per_cell,
+            (self.size_y as f32 / 2.0 + (GOAL_DISTANCE / 2.0) * pixel_per_cell as f32) as usize,
             pixel_per_cell / 3,
             PENALTY_COLOR,
             PENALTY_BUDDIES_COLOR
         );
-
-        // for w in 0..self.size {
-        //     for h in 0..self.height {
-        //         if h % pixel_per_cell == 0 || w % pixel_per_cell == 0 {
-        //             self.buffer[self.size * h + w] = BLACK;
-        //         }
-        //     }
-        // }
     }
 
     fn draw_time(&mut self, time: u64, pixel_per_cell: usize) {
@@ -459,8 +487,8 @@ impl Display {
         // Draw colon
         for i in 0..(pixel_per_cell / 2) {
             for j in 0..(pixel_per_cell / 2) {
-                self.buffer[(18 + i) * self.size + (pixel_per_cell * 5 + pixel_per_cell / 2 + j)] = WHITE;
-                self.buffer[(22 + i + pixel_per_cell) * self.size + (pixel_per_cell * 5 + pixel_per_cell / 2 + j)] = WHITE;
+                self.buffer[(18 + i) * self.size_x + (pixel_per_cell * 5 + pixel_per_cell / 2 + j)] = WHITE;
+                self.buffer[(22 + i + pixel_per_cell) * self.size_x + (pixel_per_cell * 5 + pixel_per_cell / 2 + j)] = WHITE;
             }
         }
 
@@ -555,19 +583,19 @@ impl Display {
                 }
                 let px: usize = x + dx - size / 2;
                 let py: usize = y + dy - size / 2;
-                if py * self.size + px < self.size * self.height {
-                    self.buffer[py * self.size + px] = color;
+                if py * self.size_x + px < self.size_x * self.size_y {
+                    self.buffer[py * self.size_x + px] = color;
                 }
             }
         }
     }
 
     fn draw_line(&mut self, x: usize, color: u32) {
-        for i in 0..self.height {
-            if  i * self.size + x >= self.size * self.height {
+        for i in 0..self.size_y {
+            if  i * self.size_x + x >= self.size_x * self.size_y {
                 continue;
             }
-            self.buffer[i * self.size + x] = color;
+            self.buffer[i * self.size_x + x] = color;
         }
     }
 
@@ -592,10 +620,10 @@ impl Display {
                     let py = cy + dy;
 
                     if px >= 0 && py >= 0 &&
-                       (px as usize) < self.size &&
-                       (py as usize) < self.height
+                       (px as usize) < self.size_x &&
+                       (py as usize) < self.size_y
                     {
-                        let idx = (py as usize) * self.size + (px as usize);
+                        let idx = (py as usize) * self.size_x + (px as usize);
 
                         let color = if manhattan == r {
                             border_color
@@ -627,8 +655,8 @@ impl Display {
                 let py = cy + dy;
 
                 if px < 0 || py < 0 ||
-                   (px as usize) >= self.size ||
-                   (py as usize) >= self.height {
+                   (px as usize) >= self.size_x ||
+                   (py as usize) >= self.size_y {
                     continue;
                 }
 
@@ -636,7 +664,7 @@ impl Display {
                 let r_sq = (r * r) as f32;
 
                 if dist_sq <= r_sq {
-                    let idx = (py as usize) * self.size + (px as usize);
+                    let idx = (py as usize) * self.size_x + (px as usize);
                     let dist = dist_sq.sqrt();
                     let color = if (r as f32 - dist).abs() < 1.0 {
                         border_color
@@ -645,6 +673,33 @@ impl Display {
                     };
 
                     self.buffer[idx] = color;
+                }
+            }
+        }
+    }
+
+    fn draw_rectangle(
+        &mut self,
+        x: usize,
+        y: usize,
+        fill_color: u32,
+        border_color: u32,
+        pixel_per_cell: usize,
+        side: usize,
+    ) {
+        let size_x = (LINE_OUT_HALL_WIDTH * pixel_per_cell as f32) as usize;
+        let size_y = (LINE_OUT_HALL_HEIGHT * pixel_per_cell as f32) as usize;
+
+        for dy in 0..size_y {
+            for dx in 0..size_x {
+                let px: usize = x + dx - size_x / 2;
+                let py: usize = y + dy - side;
+                if py * self.size_x + px < self.size_x * self.size_y {
+                    if dy == 0 || dx == 0 || dy == size_y - 1 || dx == size_x - 1 || dy == (LINE_OUT_LINE_FIVE * pixel_per_cell as f32) as usize {
+                        self.buffer[py * self.size_x + px] = border_color;
+                    } else {
+                        self.buffer[py * self.size_x + px] = fill_color;
+                    }
                 }
             }
         }

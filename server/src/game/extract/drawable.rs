@@ -17,6 +17,9 @@ impl GameState {
         if self.state.name == "ruck" {
             drawable.set_state(self.state.x, self.state.y, self.state.name.clone(), self.state.size);
         }
+        if self.state.name == "line_out" {
+            drawable.set_state(self.state.x, self.state.y, self.state.name.clone(), self.state.size);
+        }
         drawable.home_score = self.home_team.score as usize;
         drawable.away_score = self.away_team.score as usize;
         drawable.set_time(self.time);

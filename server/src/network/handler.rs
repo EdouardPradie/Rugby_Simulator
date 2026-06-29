@@ -91,10 +91,10 @@ pub fn handle_client(mut stream: TcpStream, display_enable: bool, run_time: bool
                     (b"transformation-kick", GameState::play),
                     (b"scrum", GameState::scrum),
                     (b"ruck", GameState::ruck),
-                    (b"offside", GameState::offside),
+                    (b"line_out", GameState::line_out),
                     (b"set-penalty", GameState::set_penalty),
                     (b"set-transformation", GameState::set_transformation),
-                    (b"set-offside", GameState::set_offside),
+                    (b"set-line_out", GameState::set_line_out),
                 ];
 
                 if status == 1 {
@@ -130,12 +130,6 @@ pub fn handle_client(mut stream: TcpStream, display_enable: bool, run_time: bool
                 if buffer[..n].iter().any(|&byte| byte != 0) {
                     println!("Unrecognized input from {}: {}", addr, String::from_utf8_lossy(&buffer[..n]).to_string());
                     buffer.fill(0);
-                }
-
-                // Echo back the received data
-                if let Err(e) = stream.write_all(&buffer[..n]) {
-                    println!("Failed to send response: {}", e);
-                    break;
                 }
             }
             Err(ref e) if e.kind() == ErrorKind::WouldBlock => {
